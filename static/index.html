@@ -990,7 +990,7 @@ tbody tr:hover { background: var(--slate-50); }
 <div class="modal-overlay" id="modal-client">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🤝 Новый клиент</span>
+      <span class="modal-title" id="modal-client-title">🤝 Новый клиент</span>
       <button class="modal-close" onclick="closeModal('client')">✕</button>
     </div>
     <div class="modal-body">
@@ -1412,6 +1412,13 @@ function closeModal(type) {
     editingPotentialId = null;
     document.getElementById('modal-potential-title').textContent = '💡 Ожидаемое поступление';
   }
+  if (type === 'client') {
+    editingClientId = null;
+    pendingContractFile = null;
+    document.getElementById('modal-client-title').textContent = '🤝 Новый клиент';
+    document.getElementById('cl-contract-label').innerHTML = '📎 Нажми или перетащи файл сюда';
+    document.getElementById('cl-contract-wrap').style.borderColor = '';
+  }
 }
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
@@ -1669,7 +1676,33 @@ async function renderPotential() {
 }
 
 // ===== CLIENTS =====
-let pendingContractFile = null; // File object waiting to be uploaded
+let editingClientId = null;
+let pendingContractFile = null;
+
+function openEditClient(c) {
+  editingClientId = c.id;
+  document.getElementById('cl-name').value = c.name || '';
+  document.getElementById('cl-type').value = c.type || 'tracking';
+  document.getElementById('cl-start').value = c.start || '';
+  document.getElementById('cl-end').value = c.end || '';
+  document.getElementById('cl-amount').value = c.amount || '';
+  document.getElementById('cl-status').value = c.status || 'active';
+  document.getElementById('cl-tasks').value = c.tasks || '';
+  document.getElementById('cl-chat').value = c.chat || '';
+  document.getElementById('cl-canvas').value = c.canvas || '';
+  document.getElementById('cl-notes').value = c.notes || '';
+  // Show existing contract if any
+  try {
+    const cf = c.contract_file ? JSON.parse(c.contract_file) : null;
+    if (cf) {
+      document.getElementById('cl-contract-label').innerHTML =
+        `📄 <strong>${cf.original}</strong> <span style="color:var(--slate-400);font-size:11px">(уже загружен)</span>`;
+      document.getElementById('cl-contract-wrap').style.borderColor = 'var(--blue-400)';
+    }
+  } catch(e) {}
+  document.getElementById('modal-client-title').textContent = '✏️ Редактировать клиента';
+  document.getElementById('modal-client').classList.add('open');
+} // File object waiting to be uploaded
 
 function handleContractFile(input) {
   const file = input.files[0];
@@ -1694,12 +1727,12 @@ async function uploadContractFile(file) {
 }
 
 async function saveClient() {
-  let contractFile = '';
+  let contractFile = editingClientId ? undefined : '';
   if (pendingContractFile) {
     contractFile = await uploadContractFile(pendingContractFile);
     pendingContractFile = null;
   }
-  await api('POST', '/clients', {
+  const body = {
     name: document.getElementById('cl-name').value,
     type: document.getElementById('cl-type').value,
     start: document.getElementById('cl-start').value,
@@ -1710,14 +1743,22 @@ async function saveClient() {
     chat: document.getElementById('cl-chat').value,
     canvas: document.getElementById('cl-canvas').value,
     notes: document.getElementById('cl-notes').value,
-    contract_file: contractFile
-  });
+  };
+  if (contractFile !== undefined) body.contract_file = contractFile;
+
+  if (editingClientId) {
+    await api('PATCH', `/clients/${editingClientId}`, body);
+    editingClientId = null;
+  } else {
+    await api('POST', '/clients', body);
+  }
   closeModal('client');
   ['cl-name','cl-tasks','cl-chat','cl-canvas','cl-notes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('cl-amount').value = '';
   document.getElementById('cl-contract-input').value = '';
   document.getElementById('cl-contract-label').innerHTML = '📎 Нажми или перетащи файл сюда';
   document.getElementById('cl-contract-wrap').style.borderColor = '';
+  document.getElementById('modal-client-title').textContent = '🤝 Новый клиент';
   renderClients();
 }
 
@@ -1783,7 +1824,10 @@ async function renderClients() {
       ${c.notes ? `<div style="margin-top:8px;font-size:11px;color:var(--slate-400)">${c.notes}</div>` : ''}
       <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
         <button class="btn btn-outline btn-sm" onclick="openDrawer(${c.id})" style="font-size:12px">Открыть карточку →</button>
-        <button class="del-btn" onclick="deleteClient(${c.id})" title="Удалить">✕</button>
+        <div class="row-actions">
+          <button class="edit-btn" onclick='openEditClient(${JSON.stringify(c)})' title="Редактировать">✎</button>
+          <button class="del-btn" onclick="deleteClient(${c.id})" title="Удалить">✕</button>
+        </div>
       </div>
     </div>`;
   }).join('');

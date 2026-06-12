@@ -232,6 +232,20 @@ def create_client(body: schemas.ClientCreate, db: Session = Depends(get_db),
     return item
 
 
+@app.patch("/clients/{item_id}", response_model=schemas.ClientOut)
+def update_client(item_id: int, body: schemas.ClientCreate, db: Session = Depends(get_db),
+                  current_user: models.User = Depends(auth.get_current_user)):
+    item = db.query(models.Client).filter(
+        models.Client.id == item_id, models.Client.user_id == current_user.id).first()
+    if not item:
+        raise HTTPException(status_code=404)
+    for k, v in body.model_dump().items():
+        setattr(item, k, v)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 @app.delete("/clients/{item_id}")
 def delete_client(item_id: int, db: Session = Depends(get_db),
                   current_user: models.User = Depends(auth.get_current_user)):
