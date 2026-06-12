@@ -36,6 +36,19 @@ class Expense(Base):
     month = Column(Integer)
 
 
+class PotentialIncome(Base):
+    __tablename__ = "potential_incomes"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(String)
+    amount = Column(Float, default=0)
+    source = Column(String, default="")
+    desc = Column(Text, default="")
+    tag = Column(String, default="other")
+    year = Column(Integer)
+    month = Column(Integer)
+
+
 class Client(Base):
     __tablename__ = "clients"
     id = Column(Integer, primary_key=True, index=True)

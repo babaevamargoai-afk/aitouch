@@ -140,6 +140,39 @@ def delete_expense(item_id: int, db: Session = Depends(get_db),
     return {"ok": True}
 
 
+# ===== POTENTIAL INCOME =====
+
+@app.get("/potential", response_model=List[schemas.PotentialOut])
+def list_potential(year: int, month: int, db: Session = Depends(get_db),
+                   current_user: models.User = Depends(auth.get_current_user)):
+    return db.query(models.PotentialIncome).filter(
+        models.PotentialIncome.user_id == current_user.id,
+        models.PotentialIncome.year == year,
+        models.PotentialIncome.month == month
+    ).order_by(models.PotentialIncome.date.desc()).all()
+
+@app.post("/potential", response_model=schemas.PotentialOut)
+def create_potential(body: schemas.PotentialCreate, db: Session = Depends(get_db),
+                     current_user: models.User = Depends(auth.get_current_user)):
+    item = models.PotentialIncome(**body.model_dump(), user_id=current_user.id)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+@app.delete("/potential/{item_id}")
+def delete_potential(item_id: int, db: Session = Depends(get_db),
+                     current_user: models.User = Depends(auth.get_current_user)):
+    item = db.query(models.PotentialIncome).filter(
+        models.PotentialIncome.id == item_id,
+        models.PotentialIncome.user_id == current_user.id).first()
+    if not item:
+        raise HTTPException(status_code=404)
+    db.delete(item)
+    db.commit()
+    return {"ok": True}
+
+
 # ===== FILE UPLOAD =====
 
 @app.post("/upload/contract")

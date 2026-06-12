@@ -44,6 +44,20 @@ class ExpenseOut(ExpenseCreate):
         from_attributes = True
 
 
+class PotentialCreate(BaseModel):
+    date: str
+    amount: float = 0
+    source: str = ""
+    desc: str = ""
+    tag: str = "other"
+    year: int
+    month: int
+
+class PotentialOut(PotentialCreate):
+    id: int
+    class Config:
+        from_attributes = True
+
 class ClientCreate(BaseModel):
     name: str = ""
     type: str = "tracking"
