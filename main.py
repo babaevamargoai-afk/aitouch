@@ -160,6 +160,21 @@ def create_potential(body: schemas.PotentialCreate, db: Session = Depends(get_db
     db.refresh(item)
     return item
 
+@app.patch("/potential/{item_id}", response_model=schemas.PotentialOut)
+def update_potential(item_id: int, body: schemas.PotentialCreate, db: Session = Depends(get_db),
+                     current_user: models.User = Depends(auth.get_current_user)):
+    item = db.query(models.PotentialIncome).filter(
+        models.PotentialIncome.id == item_id,
+        models.PotentialIncome.user_id == current_user.id).first()
+    if not item:
+        raise HTTPException(status_code=404)
+    for k, v in body.model_dump().items():
+        setattr(item, k, v)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 @app.delete("/potential/{item_id}")
 def delete_potential(item_id: int, db: Session = Depends(get_db),
                      current_user: models.User = Depends(auth.get_current_user)):

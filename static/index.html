@@ -1063,7 +1063,7 @@ tbody tr:hover { background: var(--slate-50); }
 <div class="modal-overlay" id="modal-potential">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">💡 Ожидаемое поступление</span>
+      <span class="modal-title" id="modal-potential-title">💡 Ожидаемое поступление</span>
       <button class="modal-close" onclick="closeModal('potential')">✕</button>
     </div>
     <div class="modal-body">
@@ -1408,6 +1408,10 @@ function closeModal(type) {
     editingStreamId = null;
     document.getElementById('modal-stream-title').textContent = '⚡ Новый поток';
   }
+  if (type === 'potential') {
+    editingPotentialId = null;
+    document.getElementById('modal-potential-title').textContent = '💡 Ожидаемое поступление';
+  }
 }
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
@@ -1589,10 +1593,23 @@ async function renderFinance() {
 
 
 // ===== POTENTIAL =====
+let editingPotentialId = null;
+
+function openEditPotential(i) {
+  editingPotentialId = i.id;
+  document.getElementById('pot-date').value = i.date;
+  document.getElementById('pot-amount').value = i.amount;
+  document.getElementById('pot-source').value = i.source;
+  document.getElementById('pot-desc').value = i.desc;
+  document.getElementById('pot-tag').value = i.tag;
+  document.getElementById('modal-potential-title').textContent = '✏️ Редактировать потенциал';
+  document.getElementById('modal-potential').classList.add('open');
+}
+
 async function savePotential() {
   const date = document.getElementById('pot-date').value;
   const [y, m] = date ? date.split('-').map(Number) : [currentYear, currentMonth + 1];
-  await api('POST', '/potential', {
+  const body = {
     date,
     amount: parseFloat(document.getElementById('pot-amount').value) || 0,
     source: document.getElementById('pot-source').value,
@@ -1600,9 +1617,16 @@ async function savePotential() {
     tag: document.getElementById('pot-tag').value,
     year: y,
     month: m - 1
-  });
+  };
+  if (editingPotentialId) {
+    await api('PATCH', `/potential/${editingPotentialId}`, body);
+    editingPotentialId = null;
+  } else {
+    await api('POST', '/potential', body);
+  }
   closeModal('potential');
   ['pot-amount','pot-source','pot-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modal-potential-title').textContent = '💡 Ожидаемое поступление';
   renderPotential();
 }
 
@@ -1635,7 +1659,12 @@ async function renderPotential() {
         <span class="badge badge-amber" style="margin-top:4px">${TAG_LABELS[i.tag]||i.tag}</span>
       </td>
       <td><span style="color:var(--amber-600);font-family:'JetBrains Mono',monospace;font-weight:600">${fmt(i.amount)}</span></td>
-      <td><button class="del-btn" onclick="deletePotential(${i.id})">✕</button></td>
+      <td>
+        <div class="row-actions">
+          <button class="edit-btn" onclick='openEditPotential(${JSON.stringify(i)})' title="Редактировать">✎</button>
+          <button class="del-btn" onclick="deletePotential(${i.id})" title="Удалить">✕</button>
+        </div>
+      </td>
     </tr>`).join('');
 }
 
