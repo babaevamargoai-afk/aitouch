@@ -9,6 +9,9 @@ COPY . .
 
 RUN mkdir -p /data/uploads
 
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["/app/start.sh"]
