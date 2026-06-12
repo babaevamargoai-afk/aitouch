@@ -10,6 +10,40 @@ from database import engine, get_db, Base
 
 Base.metadata.create_all(bind=engine)
 
+# ===== AUTO MIGRATIONS =====
+def run_migrations():
+    import sqlite3
+    db_path = os.environ.get("DATABASE_PATH", "./aitouch.db")
+    conn = sqlite3.connect(db_path)
+    migrations = [
+        "ALTER TABLE client_tasks ADD COLUMN verified INTEGER DEFAULT 0",
+        "ALTER TABLE clients ADD COLUMN contract_file TEXT DEFAULT ''",
+        "ALTER TABLE streams ADD COLUMN course TEXT DEFAULT ''",
+        "ALTER TABLE streams ADD COLUMN t3 INTEGER DEFAULT 0",
+        "ALTER TABLE streams ADD COLUMN p3 REAL DEFAULT 0.0",
+        """CREATE TABLE IF NOT EXISTS potential_incomes (
+            id INTEGER PRIMARY KEY, user_id INTEGER, date TEXT,
+            amount REAL DEFAULT 0, source TEXT DEFAULT '', desc TEXT DEFAULT '',
+            tag TEXT DEFAULT 'other', year INTEGER, month INTEGER)""",
+        """CREATE TABLE IF NOT EXISTS client_tasks (
+            id INTEGER PRIMARY KEY, client_id INTEGER, user_id INTEGER,
+            text TEXT DEFAULT '', done INTEGER DEFAULT 0,
+            delivered INTEGER DEFAULT 0, verified INTEGER DEFAULT 0,
+            "order" INTEGER DEFAULT 0)""",
+        """CREATE TABLE IF NOT EXISTS client_comments (
+            id INTEGER PRIMARY KEY, client_id INTEGER, user_id INTEGER,
+            text TEXT DEFAULT '', created_at TEXT)""",
+    ]
+    for sql in migrations:
+        try:
+            conn.execute(sql)
+            conn.commit()
+        except Exception:
+            pass
+    conn.close()
+
+run_migrations()
+
 _data_dir = os.environ.get("DATA_DIR", ".")
 UPLOAD_DIR = os.path.join(_data_dir, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
