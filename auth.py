@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import os
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
 import models
 
-SECRET_KEY = "aitouch-secret-key-change-in-production-2024"
+SECRET_KEY = os.environ.get("SECRET_KEY", "aitouch-local-dev-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
