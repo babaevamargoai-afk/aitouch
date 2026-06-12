@@ -18,6 +18,10 @@ def run_migrations():
     migrations = [
         "ALTER TABLE client_tasks ADD COLUMN verified INTEGER DEFAULT 0",
         "ALTER TABLE client_tasks ADD COLUMN is_header INTEGER DEFAULT 0",
+        """CREATE TABLE IF NOT EXISTS client_staff_costs (
+            id INTEGER PRIMARY KEY, client_id INTEGER, user_id INTEGER,
+            name TEXT DEFAULT '', desc TEXT DEFAULT '',
+            amount REAL DEFAULT 0, date TEXT DEFAULT '')""",
         "ALTER TABLE clients ADD COLUMN contract_file TEXT DEFAULT ''",
         "ALTER TABLE streams ADD COLUMN course TEXT DEFAULT ''",
         "ALTER TABLE streams ADD COLUMN t3 INTEGER DEFAULT 0",
@@ -290,6 +294,36 @@ def delete_client(item_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=404)
     db.delete(item)
     db.commit()
+    return {"ok": True}
+
+
+# ===== CLIENT STAFF COSTS =====
+
+@app.get("/clients/{client_id}/staff-costs", response_model=List[schemas.StaffCostOut])
+def get_staff_costs(client_id: int, db: Session = Depends(get_db),
+                    current_user: models.User = Depends(auth.get_current_user)):
+    _get_client(client_id, current_user.id, db)
+    return db.query(models.ClientStaffCost).filter(
+        models.ClientStaffCost.client_id == client_id).all()
+
+@app.post("/clients/{client_id}/staff-costs", response_model=schemas.StaffCostOut)
+def add_staff_cost(client_id: int, body: schemas.StaffCostCreate,
+                   db: Session = Depends(get_db),
+                   current_user: models.User = Depends(auth.get_current_user)):
+    _get_client(client_id, current_user.id, db)
+    item = models.ClientStaffCost(client_id=client_id, user_id=current_user.id, **body.model_dump())
+    db.add(item); db.commit(); db.refresh(item)
+    return item
+
+@app.delete("/clients/{client_id}/staff-costs/{item_id}")
+def delete_staff_cost(client_id: int, item_id: int, db: Session = Depends(get_db),
+                      current_user: models.User = Depends(auth.get_current_user)):
+    item = db.query(models.ClientStaffCost).filter(
+        models.ClientStaffCost.id == item_id,
+        models.ClientStaffCost.client_id == client_id,
+        models.ClientStaffCost.user_id == current_user.id).first()
+    if not item: raise HTTPException(status_code=404)
+    db.delete(item); db.commit()
     return {"ok": True}
 
 

@@ -88,6 +88,17 @@ class ClientComment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ClientStaffCost(Base):
+    __tablename__ = "client_staff_costs"
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, default="")      # имя сотрудника
+    desc = Column(String, default="")      # за что
+    amount = Column(Float, default=0)
+    date = Column(String, default="")
+
+
 class Stream(Base):
     __tablename__ = "streams"
     id = Column(Integer, primary_key=True, index=True)

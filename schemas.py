@@ -112,6 +112,17 @@ class ClientCommentOut(BaseModel):
     class Config:
         from_attributes = True
 
+class StaffCostCreate(BaseModel):
+    name: str = ""
+    desc: str = ""
+    amount: float = 0
+    date: str = ""
+
+class StaffCostOut(StaffCostCreate):
+    id: int
+    class Config:
+        from_attributes = True
+
 class StreamCreate(BaseModel):
     course: str = ""
     name: str = ""
