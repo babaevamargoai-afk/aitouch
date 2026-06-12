@@ -74,6 +74,7 @@ class ClientTask(Base):
     text = Column(Text, default="")
     done = Column(Boolean, default=False)
     delivered = Column(Boolean, default=False)
+    verified = Column(Boolean, default=False)
     order = Column(Integer, default=0)
 
 

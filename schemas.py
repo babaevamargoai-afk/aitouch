@@ -85,6 +85,7 @@ class ClientTaskCreate(BaseModel):
 class ClientTaskUpdate(BaseModel):
     done: Optional[bool] = None
     delivered: Optional[bool] = None
+    verified: Optional[bool] = None
     text: Optional[str] = None
 
 class ClientTaskOut(BaseModel):
@@ -92,6 +93,7 @@ class ClientTaskOut(BaseModel):
     text: str
     done: bool
     delivered: bool
+    verified: bool = False
     order: int
     class Config:
         from_attributes = True

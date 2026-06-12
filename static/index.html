@@ -1138,10 +1138,12 @@ tbody tr:hover { background: var(--slate-50); }
           <div class="task-progress-bar"><div class="task-progress-fill" id="task-progress-fill"></div></div>
           <div class="task-progress-text" id="task-progress-text">0 / 0</div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;font-size:12px;color:var(--slate-500)">
+        <div style="display:flex;gap:8px;margin-bottom:12px;font-size:12px;color:var(--slate-500);flex-wrap:wrap">
           <span id="tasks-done-count">0 сделано</span>
           <span>·</span>
-          <span id="tasks-delivered-count">0 отдано клиенту</span>
+          <span id="tasks-delivered-count">0 отдано</span>
+          <span>·</span>
+          <span id="tasks-verified-count" style="color:var(--purple-600);font-weight:600">0 верифицировано</span>
         </div>
       </div>
 
@@ -2204,6 +2206,7 @@ async function loadDrawerTasks() {
 
   const doneCount = tasks.filter(t => t.done).length;
   const deliveredCount = tasks.filter(t => t.delivered).length;
+  const verifiedCount = tasks.filter(t => t.verified).length;
   const pct = Math.round((doneCount / tasks.length) * 100);
 
   progWrap.style.display = 'block';
@@ -2212,7 +2215,8 @@ async function loadDrawerTasks() {
   fill.className = 'task-progress-fill' + (pct === 100 ? ' green' : '');
   document.getElementById('task-progress-text').textContent = `${doneCount} / ${tasks.length}`;
   document.getElementById('tasks-done-count').textContent = `${doneCount} сделано`;
-  document.getElementById('tasks-delivered-count').textContent = `${deliveredCount} отдано клиенту`;
+  document.getElementById('tasks-delivered-count').textContent = `${deliveredCount} отдано`;
+  document.getElementById('tasks-verified-count').textContent = `${verifiedCount} верифицировано`;
 
   list.innerHTML = tasks.map((t, idx) => `
     <div class="task-item ${t.done ? 'done-item' : ''}" id="task-item-${t.id}">
@@ -2226,6 +2230,10 @@ async function loadDrawerTasks() {
         <label class="task-check-label" title="Отдано клиенту">
           <input type="checkbox" ${t.delivered ? 'checked' : ''} onchange="toggleTask(${t.id},'delivered',this.checked)">
           <span>Отдано</span>
+        </label>
+        <label class="task-check-label" title="Верифицировано">
+          <input type="checkbox" ${t.verified ? 'checked' : ''} onchange="toggleTask(${t.id},'verified',this.checked)" style="accent-color:var(--purple-600)">
+          <span style="color:${t.verified ? 'var(--purple-600)' : ''}">Верифиц.</span>
         </label>
       </div>
       <button class="task-del" onclick="deleteTask(${t.id})" title="Удалить">✕</button>
