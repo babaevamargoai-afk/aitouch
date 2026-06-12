@@ -17,6 +17,7 @@ def run_migrations():
     conn = sqlite3.connect(db_path)
     migrations = [
         "ALTER TABLE client_tasks ADD COLUMN verified INTEGER DEFAULT 0",
+        "ALTER TABLE client_tasks ADD COLUMN is_header INTEGER DEFAULT 0",
         "ALTER TABLE clients ADD COLUMN contract_file TEXT DEFAULT ''",
         "ALTER TABLE streams ADD COLUMN course TEXT DEFAULT ''",
         "ALTER TABLE streams ADD COLUMN t3 INTEGER DEFAULT 0",
@@ -308,6 +309,21 @@ def get_tasks(client_id: int, db: Session = Depends(get_db),
     return db.query(models.ClientTask).filter(
         models.ClientTask.client_id == client_id
     ).order_by(models.ClientTask.order).all()
+
+@app.post("/clients/{client_id}/tasks/reorder")
+def reorder_tasks(client_id: int, body: List[dict],
+                  db: Session = Depends(get_db),
+                  current_user: models.User = Depends(auth.get_current_user)):
+    _get_client(client_id, current_user.id, db)
+    for item in body:
+        task = db.query(models.ClientTask).filter(
+            models.ClientTask.id == item['id'],
+            models.ClientTask.client_id == client_id).first()
+        if task:
+            task.order = item['order']
+    db.commit()
+    return {"ok": True}
+
 
 @app.post("/clients/{client_id}/tasks/bulk")
 def bulk_create_tasks(client_id: int, body: List[schemas.ClientTaskCreate],

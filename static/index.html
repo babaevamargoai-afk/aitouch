@@ -369,23 +369,54 @@ tbody tr:hover { background: var(--slate-50); }
 .task-import-box textarea:focus { border-color: var(--blue-400); box-shadow: 0 0 0 3px var(--blue-100); }
 .task-import-hint { font-size: 11px; color: var(--slate-400); margin-top: 6px; }
 .task-item {
-  display: flex; align-items: flex-start; gap: 10px;
+  display: flex; align-items: flex-start; gap: 8px;
   padding: 10px 12px; border-radius: 10px; border: 1px solid var(--slate-100);
-  background: var(--slate-50); margin-bottom: 8px; transition: background .15s;
+  background: var(--slate-50); margin-bottom: 6px; transition: background .15s;
+  cursor: default;
 }
+.task-item.dragging { opacity: 0.4; }
+.task-item.drag-over { border-color: var(--blue-400); background: var(--blue-50); }
 .task-item.done-item { background: var(--green-100); border-color: #bbf7d0; }
 .task-item.done-item .task-text { text-decoration: line-through; color: var(--slate-400); }
-.task-num { font-size: 11px; font-weight: 700; color: var(--slate-400); min-width: 20px; padding-top: 2px; }
-.task-text { flex: 1; font-size: 13px; color: var(--slate-700); line-height: 1.5; padding-top: 1px; }
-.task-checks { display: flex; gap: 12px; align-items: flex-start; flex-shrink: 0; }
+
+/* HEADER TASK */
+.task-item.header-item {
+  background: var(--blue-600); border-color: var(--blue-600);
+  margin-top: 12px; margin-bottom: 4px;
+}
+.task-item.header-item .task-text { color: white; font-weight: 700; font-size: 13px; }
+.task-item.header-item .task-num { color: rgba(255,255,255,0.6); }
+.task-item.header-item .task-del { color: rgba(255,255,255,0.5); }
+.task-item.header-item .task-del:hover { color: white; background: rgba(255,255,255,0.2); }
+.task-item.header-item .drag-handle { color: rgba(255,255,255,0.5); }
+
+/* Sub-items indented */
+.task-item.sub-item { margin-left: 16px; }
+
+.drag-handle { cursor: grab; color: var(--slate-300); font-size: 14px; padding: 2px 2px; flex-shrink: 0; padding-top: 2px; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
+.task-num { font-size: 11px; font-weight: 700; color: var(--slate-400); min-width: 18px; padding-top: 2px; flex-shrink: 0; }
+.task-text { flex: 1; font-size: 13px; color: var(--slate-700); line-height: 1.5; padding-top: 1px; word-break: break-word; }
+.task-text-input {
+  flex: 1; font-size: 13px; color: var(--slate-800); line-height: 1.5;
+  border: none; background: transparent; outline: none;
+  font-family: 'Onest', sans-serif; padding: 0; width: 100%;
+}
+.task-item.header-item .task-text-input { color: white; font-weight: 700; }
+.task-checks { display: flex; gap: 10px; align-items: flex-start; flex-shrink: 0; }
 .task-check-label {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
 }
 .task-check-label input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue-600); }
 .task-check-label span { font-size: 9px; font-weight: 600; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+.task-item.header-item .task-checks { display: none; }
+.task-actions { display: flex; gap: 2px; flex-shrink: 0; align-items: flex-start; }
 .task-del { cursor: pointer; color: var(--slate-300); border: none; background: none; font-size: 13px; padding: 2px 4px; border-radius: 5px; }
 .task-del:hover { color: var(--red-600); background: var(--red-100); }
+.task-toggle-header { cursor: pointer; color: var(--slate-300); border: none; background: none; font-size: 11px; padding: 2px 4px; border-radius: 5px; font-weight: 700; }
+.task-toggle-header:hover { color: var(--blue-600); background: var(--blue-50); }
+.task-item.header-item .task-toggle-header { color: rgba(255,255,255,0.6); }
+.task-item.header-item .task-toggle-header:hover { color: white; background: rgba(255,255,255,0.2); }
 
 /* PROGRESS SUMMARY */
 .task-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -1125,8 +1156,8 @@ tbody tr:hover { background: var(--slate-50); }
       </div>
 
       <div class="task-import-box" id="task-import-box" style="display:none">
-        <textarea id="task-import-text" placeholder="Вставь список задач — каждая с новой строки:&#10;Разработать стратегию&#10;Написать контент-план&#10;Настроить чат-бот&#10;..."></textarea>
-        <div class="task-import-hint">Каждая строка станет отдельной задачей. Пустые строки игнорируются.</div>
+        <textarea id="task-import-text" placeholder="1. Смысловая упаковка&#10;- таблица смыслов&#10;- презентационный текст&#10;2. Визуальная упаковка&#10;- дизайн сайта&#10;..."></textarea>
+        <div class="task-import-hint">Строки без «-» в начале → <strong>заголовок блока</strong>. Строки с «-» → пункты внутри блока.</div>
         <div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn btn-primary btn-sm" onclick="importTasks()">Создать задачи</button>
           <button class="btn btn-outline btn-sm" onclick="toggleImportBox()">Отмена</button>
@@ -2176,16 +2207,20 @@ function toggleImportBox() {
 
 async function importTasks() {
   const raw = document.getElementById('task-import-text').value;
-  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = raw.split('\n').filter(l => l.trim());
   if (!lines.length) return;
 
-  // get current max order
   const existing = await api('GET', `/clients/${drawerClientId}/tasks`);
   const startOrder = existing ? existing.length : 0;
 
-  const body = lines.map((text, i) => ({ text, order: startOrder + i }));
-  await api('POST', `/clients/${drawerClientId}/tasks/bulk`, body);
+  const body = lines.map((line, i) => {
+    const trimmed = line.trim();
+    const isHeader = !trimmed.startsWith('-') && !trimmed.startsWith('•');
+    const text = isHeader ? trimmed : trimmed.replace(/^[-•]\s*/, '');
+    return { text, order: startOrder + i, is_header: isHeader };
+  });
 
+  await api('POST', `/clients/${drawerClientId}/tasks/bulk`, body);
   document.getElementById('task-import-text').value = '';
   toggleImportBox();
   await loadDrawerTasks();
@@ -2204,40 +2239,107 @@ async function loadDrawerTasks() {
     return;
   }
 
-  const doneCount = tasks.filter(t => t.done).length;
-  const deliveredCount = tasks.filter(t => t.delivered).length;
-  const verifiedCount = tasks.filter(t => t.verified).length;
-  const pct = Math.round((doneCount / tasks.length) * 100);
+  const nonHeaders = tasks.filter(t => !t.is_header);
+  const doneCount = nonHeaders.filter(t => t.done).length;
+  const deliveredCount = nonHeaders.filter(t => t.delivered).length;
+  const verifiedCount = nonHeaders.filter(t => t.verified).length;
+  const pct = nonHeaders.length ? Math.round((doneCount / nonHeaders.length) * 100) : 0;
 
   progWrap.style.display = 'block';
   const fill = document.getElementById('task-progress-fill');
   fill.style.width = pct + '%';
   fill.className = 'task-progress-fill' + (pct === 100 ? ' green' : '');
-  document.getElementById('task-progress-text').textContent = `${doneCount} / ${tasks.length}`;
+  document.getElementById('task-progress-text').textContent = `${doneCount} / ${nonHeaders.length}`;
   document.getElementById('tasks-done-count').textContent = `${doneCount} сделано`;
   document.getElementById('tasks-delivered-count').textContent = `${deliveredCount} отдано`;
   document.getElementById('tasks-verified-count').textContent = `${verifiedCount} верифицировано`;
 
-  list.innerHTML = tasks.map((t, idx) => `
-    <div class="task-item ${t.done ? 'done-item' : ''}" id="task-item-${t.id}">
-      <div class="task-num">${idx + 1}</div>
-      <div class="task-text">${escHtml(t.text)}</div>
+  // Track if previous item was a header for sub-item styling
+  list.innerHTML = tasks.map((t, idx) => {
+    const isHeader = t.is_header;
+    const subClass = !isHeader ? 'sub-item' : '';
+    const doneClass = !isHeader && t.done ? 'done-item' : '';
+    const headerClass = isHeader ? 'header-item' : '';
+    return `
+    <div class="task-item ${headerClass} ${doneClass} ${subClass}"
+         id="task-item-${t.id}" data-id="${t.id}"
+         draggable="true"
+         ondragstart="dragStart(event,${t.id})"
+         ondragover="dragOver(event)"
+         ondrop="dragDrop(event,${t.id})"
+         ondragleave="dragLeave(event)"
+         ondragend="dragEnd(event)">
+      <span class="drag-handle" title="Перетащить">⠿</span>
+      <div class="task-num">${isHeader ? '▸' : idx + 1 - tasks.slice(0,idx+1).filter(x=>x.is_header).length}</div>
+      <input class="task-text-input" value="${escAttr(t.text)}"
+             onblur="saveTaskText(${t.id}, this.value)"
+             onkeydown="if(event.key==='Enter'){this.blur()}"
+             placeholder="Введи текст...">
+      ${!isHeader ? `
       <div class="task-checks">
-        <label class="task-check-label" title="Сделано">
-          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id},'done',this.checked)">
+        <label class="task-check-label">
+          <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id},'done',this.checked)">
           <span>Сделано</span>
         </label>
-        <label class="task-check-label" title="Отдано клиенту">
-          <input type="checkbox" ${t.delivered ? 'checked' : ''} onchange="toggleTask(${t.id},'delivered',this.checked)">
+        <label class="task-check-label">
+          <input type="checkbox" ${t.delivered?'checked':''} onchange="toggleTask(${t.id},'delivered',this.checked)">
           <span>Отдано</span>
         </label>
-        <label class="task-check-label" title="Верифицировано">
-          <input type="checkbox" ${t.verified ? 'checked' : ''} onchange="toggleTask(${t.id},'verified',this.checked)" style="accent-color:var(--purple-600)">
-          <span style="color:${t.verified ? 'var(--purple-600)' : ''}">Верифиц.</span>
+        <label class="task-check-label">
+          <input type="checkbox" ${t.verified?'checked':''} onchange="toggleTask(${t.id},'verified',this.checked)" style="accent-color:var(--purple-600)">
+          <span style="color:${t.verified?'var(--purple-600)':''}">Верифиц.</span>
         </label>
+      </div>` : ''}
+      <div class="task-actions">
+        <button class="task-toggle-header" onclick="toggleTaskHeader(${t.id},${!isHeader})" title="${isHeader?'Сделать пунктом':'Сделать заголовком'}">${isHeader?'¶':'H'}</button>
+        <button class="task-del" onclick="deleteTask(${t.id})">✕</button>
       </div>
-      <button class="task-del" onclick="deleteTask(${t.id})" title="Удалить">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+async function saveTaskText(taskId, text) {
+  if (!text.trim()) return;
+  await api('PATCH', `/clients/${drawerClientId}/tasks/${taskId}`, { text: text.trim() });
+}
+
+async function toggleTaskHeader(taskId, makeHeader) {
+  await api('PATCH', `/clients/${drawerClientId}/tasks/${taskId}`, { is_header: makeHeader });
+  await loadDrawerTasks();
+}
+
+// ===== DRAG AND DROP =====
+let dragSrcId = null;
+
+function dragStart(e, id) {
+  dragSrcId = id;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragEnd(e) { e.currentTarget.classList.remove('dragging'); }
+function dragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+async function dragDrop(e, targetId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragSrcId === targetId) return;
+
+  // Get current order from DOM
+  const items = [...document.querySelectorAll('#tasks-list .task-item')];
+  const ids = items.map(el => parseInt(el.dataset.id));
+  const srcIdx = ids.indexOf(dragSrcId);
+  const tgtIdx = ids.indexOf(targetId);
+  if (srcIdx === -1 || tgtIdx === -1) return;
+
+  // Reorder array
+  ids.splice(srcIdx, 1);
+  ids.splice(tgtIdx, 0, dragSrcId);
+
+  // Send new order to server
+  const body = ids.map((id, i) => ({ id, order: i }));
+  await api('POST', `/clients/${drawerClientId}/tasks/reorder`, body);
+  await loadDrawerTasks();
 }
 
 async function toggleTask(taskId, field, value) {

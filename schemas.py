@@ -81,12 +81,15 @@ class ClientOut(ClientCreate):
 class ClientTaskCreate(BaseModel):
     text: str
     order: int = 0
+    is_header: bool = False
 
 class ClientTaskUpdate(BaseModel):
     done: Optional[bool] = None
     delivered: Optional[bool] = None
     verified: Optional[bool] = None
+    is_header: Optional[bool] = None
     text: Optional[str] = None
+    order: Optional[int] = None
 
 class ClientTaskOut(BaseModel):
     id: int
@@ -94,6 +97,7 @@ class ClientTaskOut(BaseModel):
     done: bool
     delivered: bool
     verified: bool = False
+    is_header: bool = False
     order: int
     class Config:
         from_attributes = True

@@ -75,6 +75,7 @@ class ClientTask(Base):
     done = Column(Boolean, default=False)
     delivered = Column(Boolean, default=False)
     verified = Column(Boolean, default=False)
+    is_header = Column(Boolean, default=False)
     order = Column(Integer, default=0)
 
 
