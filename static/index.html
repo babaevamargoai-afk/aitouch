@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AiTouch — Операционный хаб</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-900: #1e3a8a;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --white: #ffffff;
+  --green-100: #dcfce7;
+  --green-600: #16a34a;
+  --red-100: #fee2e2;
+  --red-600: #dc2626;
+  --amber-100: #fef3c7;
+  --amber-600: #d97706;
+  --purple-100: #f3e8ff;
+  --purple-600: #9333ea;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Onest', sans-serif;
+  background: var(--slate-50);
+  color: var(--slate-800);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* LOGIN SCREEN */
+#login-screen {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--slate-50);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+#login-screen.show { display: flex; }
+.login-box {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: 20px;
+  padding: 40px;
+  width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+}
+.login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.login-logo-icon {
+  width: 42px; height: 42px;
+  background: var(--blue-600);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.login-logo-icon svg { width: 22px; height: 22px; fill: white; }
+.login-title { font-size: 20px; font-weight: 700; color: var(--slate-900); }
+.login-sub { font-size: 12px; color: var(--slate-400); margin-top: 2px; }
+.login-tabs { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--slate-200); border-radius: 10px; overflow: hidden; }
+.login-tab {
+  flex: 1; text-align: center; padding: 10px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--slate-500); transition: all .15s;
+}
+.login-tab.active { background: var(--blue-600); color: white; }
+.login-error { font-size: 12px; color: var(--red-600); background: var(--red-100); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: none; }
+.login-error.show { display: block; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: var(--white);
+  border-right: 1px solid var(--slate-200);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--slate-100);
+}
+.logo-mark { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--blue-600);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-icon svg { width: 18px; height: 18px; fill: white; }
+.logo-text { font-size: 16px; font-weight: 700; color: var(--slate-900); letter-spacing: -0.3px; }
+.logo-sub { font-size: 11px; color: var(--slate-400); font-weight: 400; margin-top: 1px; }
+.month-selector {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--slate-100);
+}
+.month-label { font-size: 10px; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 8px; }
+.month-btn-row { display: flex; gap: 6px; align-items: center; }
+.month-current {
+  flex: 1; text-align: center; font-size: 13px; font-weight: 600;
+  color: var(--blue-700); background: var(--blue-50);
+  border: 1px solid var(--blue-200); border-radius: 8px; padding: 6px 8px; cursor: pointer;
+}
+.month-arrow {
+  width: 28px; height: 28px; border: 1px solid var(--slate-200);
+  border-radius: 7px; background: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--slate-500); font-size: 14px; transition: all .15s;
+}
+.month-arrow:hover { border-color: var(--blue-300); color: var(--blue-600); background: var(--blue-50); }
+.nav { padding: 12px 10px; flex: 1; }
+.nav-section { font-size: 10px; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; padding: 8px 8px 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  border-radius: 9px; cursor: pointer; font-size: 13.5px; font-weight: 500;
+  color: var(--slate-600); transition: all .15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--slate-50); color: var(--slate-800); }
+.nav-item.active { background: var(--blue-50); color: var(--blue-700); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-item .nav-badge {
+  margin-left: auto; font-size: 10px; font-weight: 600;
+  background: var(--blue-100); color: var(--blue-700); border-radius: 20px; padding: 2px 7px;
+}
+.sidebar-footer { padding: 16px; border-top: 1px solid var(--slate-100); }
+.month-summary-box {
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+  border-radius: 12px; padding: 14px; color: white;
+}
+.msb-label { font-size: 10px; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.7px; }
+.msb-value { font-size: 22px; font-weight: 700; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.msb-sub { font-size: 11px; opacity: 0.75; margin-top: 4px; }
+.logout-btn {
+  margin-top: 10px; width: 100%; padding: 8px; border: 1px solid var(--slate-200);
+  border-radius: 9px; background: white; color: var(--slate-500);
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Onest', sans-serif;
+  transition: all .15s;
+}
+.logout-btn:hover { border-color: var(--red-600); color: var(--red-600); background: var(--red-100); }
+
+/* MAIN */
+.main { margin-left: 240px; flex: 1; min-height: 100vh; }
+.topbar {
+  background: var(--white); border-bottom: 1px solid var(--slate-200);
+  padding: 0 32px; height: 60px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 17px; font-weight: 700; color: var(--slate-900); }
+.topbar-right { display: flex; gap: 10px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 9px; font-size: 13px;
+  font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+  font-family: 'Onest', sans-serif;
+}
+.btn-primary { background: var(--blue-600); color: white; }
+.btn-primary:hover { background: var(--blue-700); }
+.btn-outline { background: white; color: var(--slate-700); border: 1px solid var(--slate-200); }
+.btn-outline:hover { border-color: var(--blue-300); color: var(--blue-600); background: var(--blue-50); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-green { background: var(--green-100); color: var(--green-600); border: 1px solid #bbf7d0; }
+.btn-green:hover { background: #bbf7d0; }
+
+.content { padding: 28px 32px; }
+
+/* SECTION */
+.section { display: none; }
+.section.active { display: block; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: white; border: 1px solid var(--slate-200); border-radius: 14px; padding: 20px; }
+.stat-card .sc-label { font-size: 11px; color: var(--slate-500); font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; }
+.stat-card .sc-value { font-size: 26px; font-weight: 700; color: var(--slate-900); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+.stat-card .sc-sub { font-size: 12px; color: var(--slate-400); margin-top: 4px; }
+.stat-card.highlight { background: var(--blue-600); border-color: var(--blue-600); }
+.stat-card.highlight .sc-label { color: rgba(255,255,255,0.7); }
+.stat-card.highlight .sc-value { color: white; }
+.stat-card.highlight .sc-sub { color: rgba(255,255,255,0.65); }
+
+/* TABLE CARD */
+.table-card {
+  background: white; border: 1px solid var(--slate-200); border-radius: 14px;
+  overflow: hidden; margin-bottom: 24px;
+}
+.tc-header {
+  padding: 18px 20px; border-bottom: 1px solid var(--slate-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tc-title { font-size: 14px; font-weight: 700; color: var(--slate-900); }
+.tc-subtitle { font-size: 12px; color: var(--slate-400); margin-top: 1px; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left; padding: 10px 20px; font-size: 11px; font-weight: 600;
+  color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.6px;
+  background: var(--slate-50); border-bottom: 1px solid var(--slate-100);
+}
+tbody td {
+  padding: 13px 20px; font-size: 13px; color: var(--slate-700);
+  border-bottom: 1px solid var(--slate-50); vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--slate-50); }
+.empty-row td { text-align: center; color: var(--slate-400); font-size: 13px; padding: 40px 20px; }
+
+/* BADGE */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge-green { background: var(--green-100); color: var(--green-600); }
+.badge-red { background: var(--red-100); color: var(--red-600); }
+.badge-blue { background: var(--blue-100); color: var(--blue-700); }
+.badge-amber { background: var(--amber-100); color: var(--amber-600); }
+.badge-purple { background: var(--purple-100); color: var(--purple-600); }
+.badge-slate { background: var(--slate-100); color: var(--slate-600); }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,23,42,0.45); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white; border-radius: 16px; width: 520px;
+  max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(.96) translateY(8px); } to { opacity:1; transform: scale(1) translateY(0); } }
+.modal-header {
+  padding: 22px 24px 18px; border-bottom: 1px solid var(--slate-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: var(--slate-900); }
+.modal-close { cursor: pointer; color: var(--slate-400); font-size: 20px; line-height: 1; border: none; background: none; padding: 4px; border-radius: 6px; }
+.modal-close:hover { background: var(--slate-100); color: var(--slate-700); }
+.modal-body { padding: 22px 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--slate-100); display: flex; justify-content: flex-end; gap: 10px; }
+
+/* FORM */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--slate-600); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--slate-200);
+  border-radius: 9px; font-size: 13.5px; color: var(--slate-800);
+  font-family: 'Onest', sans-serif; outline: none; transition: border-color .15s; background: white;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--blue-400); box-shadow: 0 0 0 3px var(--blue-100);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.amount-input-wrap { position: relative; }
+.amount-input-wrap input { padding-left: 28px; font-family: 'JetBrains Mono', monospace; }
+.amount-prefix { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--slate-400); pointer-events: none; }
+
+/* PROGRESS BAR */
+.progress-bar { height: 6px; background: var(--slate-100); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; background: var(--blue-500); border-radius: 99px; transition: width .4s; }
+.progress-fill.amber { background: var(--amber-600); }
+
+/* CLIENT CARD GRID */
+.client-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.client-card {
+  background: white; border: 1px solid var(--slate-200); border-radius: 14px;
+  padding: 18px; transition: box-shadow .15s, border-color .15s;
+}
+.client-card:hover { box-shadow: 0 4px 16px rgba(37,99,235,0.08); border-color: var(--blue-200); }
+.cc-name { font-size: 14px; font-weight: 700; color: var(--slate-900); }
+.cc-type { font-size: 11px; color: var(--slate-400); margin-top: 2px; }
+.cc-meta { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.cc-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.cc-row span:first-child { color: var(--slate-500); }
+.cc-row span:last-child { font-weight: 600; color: var(--slate-700); }
+.cc-links { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+.cc-link { font-size: 11px; color: var(--blue-600); text-decoration: none; padding: 3px 8px; border: 1px solid var(--blue-200); border-radius: 6px; background: var(--blue-50); }
+.cc-link:hover { background: var(--blue-100); }
+.cc-progress { margin-top: 12px; }
+.cc-progress-label { font-size: 11px; color: var(--slate-500); display: flex; justify-content: space-between; }
+
+/* COURSE TABS */
+.course-tab {
+  padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1.5px solid var(--slate-200); background: white;
+  color: var(--slate-600); transition: all .15s; white-space: nowrap;
+}
+.course-tab:hover { border-color: var(--blue-300); color: var(--blue-600); }
+.course-tab.active { background: var(--blue-600); border-color: var(--blue-600); color: white; }
+.course-tab.all { background: var(--slate-100); border-color: var(--slate-200); color: var(--slate-600); }
+.course-tab.all.active { background: var(--slate-700); border-color: var(--slate-700); color: white; }
+
+/* NEURO CARDS */
+.stream-card { background: white; border: 1px solid var(--slate-200); border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+.stream-header {
+  padding: 16px 20px; background: var(--blue-600);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.stream-title { font-size: 15px; font-weight: 700; color: white; }
+.stream-date { font-size: 12px; color: rgba(255,255,255,0.75); }
+.stream-body { padding: 20px; }
+.stream-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.ss-item { text-align: center; }
+.ss-value { font-size: 22px; font-weight: 700; color: var(--blue-700); font-family: 'JetBrains Mono', monospace; }
+.ss-label { font-size: 11px; color: var(--slate-500); margin-top: 2px; }
+
+/* CLIENT DRAWER */
+.drawer-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,23,42,0.35); z-index: 500;
+}
+.drawer-overlay.open { display: block; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 680px; max-width: 96vw;
+  background: white; box-shadow: -8px 0 40px rgba(0,0,0,0.12);
+  z-index: 501; display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform .25s ease;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-head {
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid var(--slate-100);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-shrink: 0;
+}
+.drawer-head-info { flex: 1; min-width: 0; }
+.drawer-name { font-size: 20px; font-weight: 700; color: var(--slate-900); }
+.drawer-meta { font-size: 12px; color: var(--slate-400); margin-top: 4px; display: flex; gap: 14px; flex-wrap: wrap; }
+.drawer-close { cursor: pointer; color: var(--slate-400); font-size: 22px; border: none; background: none; padding: 4px 6px; border-radius: 6px; flex-shrink: 0; }
+.drawer-close:hover { background: var(--slate-100); color: var(--slate-700); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 28px; }
+.drawer-section-title {
+  font-size: 11px; font-weight: 700; color: var(--slate-400);
+  text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* TASKS */
+.task-import-box { margin-bottom: 14px; }
+.task-import-box textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--slate-200);
+  border-radius: 9px; font-size: 13px; font-family: 'Onest', sans-serif;
+  color: var(--slate-800); outline: none; resize: vertical; min-height: 90px;
+  transition: border-color .15s;
+}
+.task-import-box textarea:focus { border-color: var(--blue-400); box-shadow: 0 0 0 3px var(--blue-100); }
+.task-import-hint { font-size: 11px; color: var(--slate-400); margin-top: 6px; }
+.task-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--slate-100);
+  background: var(--slate-50); margin-bottom: 8px; transition: background .15s;
+}
+.task-item.done-item { background: var(--green-100); border-color: #bbf7d0; }
+.task-item.done-item .task-text { text-decoration: line-through; color: var(--slate-400); }
+.task-num { font-size: 11px; font-weight: 700; color: var(--slate-400); min-width: 20px; padding-top: 2px; }
+.task-text { flex: 1; font-size: 13px; color: var(--slate-700); line-height: 1.5; padding-top: 1px; }
+.task-checks { display: flex; gap: 12px; align-items: flex-start; flex-shrink: 0; }
+.task-check-label {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer;
+}
+.task-check-label input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue-600); }
+.task-check-label span { font-size: 9px; font-weight: 600; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+.task-del { cursor: pointer; color: var(--slate-300); border: none; background: none; font-size: 13px; padding: 2px 4px; border-radius: 5px; }
+.task-del:hover { color: var(--red-600); background: var(--red-100); }
+
+/* PROGRESS SUMMARY */
+.task-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.task-progress-bar { flex: 1; height: 8px; background: var(--slate-100); border-radius: 99px; overflow: hidden; }
+.task-progress-fill { height: 100%; background: var(--blue-500); border-radius: 99px; transition: width .4s; }
+.task-progress-fill.green { background: var(--green-600); }
+.task-progress-text { font-size: 12px; font-weight: 700; color: var(--slate-600); white-space: nowrap; }
+
+/* COMMENTS */
+.comment-input-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.comment-input-row textarea {
+  flex: 1; padding: 10px 12px; border: 1px solid var(--slate-200);
+  border-radius: 9px; font-size: 13px; font-family: 'Onest', sans-serif;
+  color: var(--slate-800); outline: none; resize: none; height: 70px;
+  transition: border-color .15s;
+}
+.comment-input-row textarea:focus { border-color: var(--blue-400); box-shadow: 0 0 0 3px var(--blue-100); }
+.comment-item {
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--slate-100);
+  background: white; margin-bottom: 8px; position: relative;
+}
+.comment-item:hover .comment-del { opacity: 1; }
+.comment-date { font-size: 11px; color: var(--slate-400); font-weight: 600; margin-bottom: 5px; }
+.comment-text { font-size: 13px; color: var(--slate-700); line-height: 1.6; white-space: pre-wrap; }
+.comment-del {
+  position: absolute; top: 10px; right: 10px;
+  cursor: pointer; color: var(--slate-300); border: none; background: none;
+  font-size: 13px; padding: 2px 5px; border-radius: 5px; opacity: 0; transition: all .15s;
+}
+.comment-del:hover { color: var(--red-600); background: var(--red-100); }
+
+/* MANAGERS TABLE IN MODAL */
+.mgr-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+.mgr-table th { font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 6px 8px; text-align: left; }
+.mgr-table td { padding: 4px 6px; }
+.mgr-table input { width: 100%; padding: 7px 10px; border: 1px solid var(--slate-200); border-radius: 7px; font-size: 13px; font-family: 'Onest', sans-serif; color: var(--slate-800); outline: none; background: white; }
+.mgr-table input:focus { border-color: var(--blue-400); box-shadow: 0 0 0 2px var(--blue-100); }
+.mgr-table .amount-col input { font-family: 'JetBrains Mono', monospace; }
+.mgr-add-btn { font-size: 12px; color: var(--blue-600); cursor: pointer; border: none; background: none; font-family: 'Onest', sans-serif; font-weight: 600; padding: 4px 0; }
+.mgr-add-btn:hover { color: var(--blue-700); }
+
+/* MANAGERS FILTER & STAT */
+.mgr-filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.mgr-filter-chip {
+  padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 1.5px solid var(--slate-200); background: white; color: var(--slate-600);
+  transition: all .15s;
+}
+.mgr-filter-chip:hover { border-color: var(--purple-600); color: var(--purple-600); }
+.mgr-filter-chip.active { background: var(--purple-600); border-color: var(--purple-600); color: white; }
+
+/* CHART CARDS */
+.chart-card { background: white; border: 1px solid var(--slate-200); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+.chart-card h3 { font-size: 14px; font-weight: 700; color: var(--slate-900); margin-bottom: 20px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 99px; }
+
+/* MONEY */
+.money-pos { color: var(--green-600); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.money-neg { color: var(--red-600); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.money-neu { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--slate-700); }
+
+.section-title { font-size: 13px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 14px; }
+
+.del-btn { cursor: pointer; color: var(--slate-300); border: none; background: none; font-size: 14px; padding: 4px 6px; border-radius: 6px; transition: all .15s; }
+.del-btn:hover { color: var(--red-600); background: var(--red-100); }
+.edit-btn { cursor: pointer; color: var(--slate-300); border: none; background: none; font-size: 14px; padding: 4px 6px; border-radius: 6px; transition: all .15s; }
+.edit-btn:hover { color: var(--blue-600); background: var(--blue-50); }
+.row-actions { display: flex; gap: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="show">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <div class="login-title">AiTouch</div>
+        <div class="login-sub">Операционный хаб</div>
+      </div>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab active" id="tab-login" onclick="switchAuthTab('login')">Войти</div>
+      <div class="login-tab" id="tab-register" onclick="switchAuthTab('register')">Регистрация</div>
+    </div>
+    <div class="login-error" id="auth-error"></div>
+    <div class="form-group">
+      <label>Логин</label>
+      <input type="text" id="auth-username" placeholder="Введите логин" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Пароль</label>
+      <input type="password" id="auth-password" placeholder="Введите пароль" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="doAuth()" id="auth-btn">Войти</button>
+  </div>
+</div>
+
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">AiTouch</div>
+        <div class="logo-sub">Операционный хаб</div>
+      </div>
+    </div>
+  </div>
+  <div class="month-selector">
+    <div class="month-label">Текущий период</div>
+    <div class="month-btn-row">
+      <button class="month-arrow" onclick="changeMonth(-1)">‹</button>
+      <div class="month-current" id="monthDisplay">—</div>
+      <button class="month-arrow" onclick="changeMonth(1)">›</button>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Разделы</div>
+    <div class="nav-item active" onclick="switchSection('finance', this)">
+      <span class="nav-icon">💰</span> Финансы
+    </div>
+    <div class="nav-item" onclick="switchSection('clients', this)">
+      <span class="nav-icon">🤝</span> Клиенты
+      <span class="nav-badge" id="clientsBadge">0</span>
+    </div>
+    <div class="nav-item" onclick="switchSection('neuro', this)">
+      <span class="nav-icon">⚡</span> Нейроспринт
+      <span class="nav-badge" id="neuroBadge">0</span>
+    </div>
+    <div class="nav-item" onclick="switchSection('analytics', this)">
+      <span class="nav-icon">📊</span> Аналитика
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="month-summary-box">
+      <div class="msb-label">Итог месяца</div>
+      <div class="msb-value" id="sidebarBalance">0 ₽</div>
+      <div class="msb-sub" id="sidebarBalanceSub">доходы - расходы</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Выйти из аккаунта</button>
+  </div>
+</aside>
+
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Финансы</div>
+    <div class="topbar-right" id="topbarActions">
+      <button class="btn btn-outline btn-sm" onclick="openModal('income')">+ Доход</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('expense')">+ Расход</button>
+    </div>
+  </div>
+
+
+  <div class="content">
+
+  <!-- FINANCE SECTION -->
+  <div class="section active" id="sec-finance">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="sc-label">Доходы</div>
+        <div class="sc-value money-pos" id="stat-income">0 ₽</div>
+        <div class="sc-sub" id="stat-income-count">0 поступлений</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Расходы</div>
+        <div class="sc-value money-neg" id="stat-expense">0 ₽</div>
+        <div class="sc-sub" id="stat-expense-count">0 платежей</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="sc-label">Чистая прибыль</div>
+        <div class="sc-value" id="stat-profit">0 ₽</div>
+        <div class="sc-sub" id="stat-profit-sub">доходы − расходы</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Маржа</div>
+        <div class="sc-value" id="stat-margin">—</div>
+        <div class="sc-sub">рентабельность</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="table-card">
+        <div class="tc-header">
+          <div>
+            <div class="tc-title">📥 Поступления</div>
+            <div class="tc-subtitle">Все доходы за период</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openModal('income')">+ Добавить</button>
+        </div>
+        <table>
+          <thead><tr><th>Дата</th><th>Источник / описание</th><th>Сумма</th><th></th></tr></thead>
+          <tbody id="income-table-body">
+            <tr class="empty-row"><td colspan="4">Нет поступлений за этот период</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <div class="tc-header">
+          <div>
+            <div class="tc-title">📤 Расходы</div>
+            <div class="tc-subtitle">Все расходы за период</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openModal('expense')">+ Добавить</button>
+        </div>
+        <table>
+          <thead><tr><th>Дата</th><th>На что / описание</th><th>Категория</th><th>Сумма</th><th></th></tr></thead>
+          <tbody id="expense-table-body">
+            <tr class="empty-row"><td colspan="5">Нет расходов за этот период</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CLIENTS SECTION -->
+  <div class="section" id="sec-clients">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="sc-label">Активных клиентов</div>
+        <div class="sc-value" id="cl-stat-active">0</div>
+        <div class="sc-sub">в работе сейчас</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Трекинг</div>
+        <div class="sc-value" id="cl-stat-tracking">0</div>
+        <div class="sc-sub">клиентов</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Мастер-группа</div>
+        <div class="sc-value" id="cl-stat-master">0</div>
+        <div class="sc-sub">клиентов</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Всего клиентов</div>
+        <div class="sc-value" id="cl-stat-total">0</div>
+        <div class="sc-sub">в базе</div>
+      </div>
+    </div>
+    <div class="tc-header" style="padding:0 0 16px;">
+      <div class="tc-title">Клиенты в работе</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('client')">+ Новый клиент</button>
+    </div>
+    <div class="client-grid" id="clients-grid">
+      <div style="grid-column:1/-1;text-align:center;color:var(--slate-400);padding:60px 0;font-size:14px;">
+        Добавь первого клиента →
+      </div>
+    </div>
+  </div>
+
+
+  <!-- NEURO SECTION -->
+  <div class="section" id="sec-neuro">
+    <!-- Общая сводка -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="sc-label">Курсов</div>
+        <div class="sc-value" id="ns-stat-courses">0</div>
+        <div class="sc-sub">активных</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Потоков всего</div>
+        <div class="sc-value" id="ns-stat-streams">0</div>
+        <div class="sc-sub">по всем курсам</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Стандарт + Бизнес</div>
+        <div class="sc-value" id="ns-stat-students">0</div>
+        <div class="sc-sub">студентов</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="sc-label">Выручка всего</div>
+        <div class="sc-value" id="ns-stat-revenue">—</div>
+        <div class="sc-sub">по всем потокам</div>
+      </div>
+    </div>
+
+    <!-- Вкладки курсов -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div id="course-tabs" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('stream')">+ Новый поток</button>
+    </div>
+
+    <!-- Список потоков выбранного курса -->
+    <!-- Фильтр по менеджерам -->
+    <div id="mgr-filter-wrap" style="display:none;margin-bottom:4px">
+      <div style="font-size:11px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;">Фильтр по менеджеру</div>
+      <div class="mgr-filter-row" id="mgr-filter-chips"></div>
+    </div>
+
+    <div id="streams-list">
+      <div style="text-align:center;color:var(--slate-400);padding:60px 0;font-size:14px;">
+        Добавь первый поток →
+      </div>
+    </div>
+
+    <!-- Аналитика менеджеров -->
+    <div id="mgr-stat-wrap" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:14px;margin-top:8px;">📊 Сводка по менеджерам</div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Менеджер</th><th>Продаж (шт)</th><th>Выручка</th><th>Потоков</th><th>Средний чек</th>
+          </tr></thead>
+          <tbody id="mgr-stat-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ANALYTICS SECTION -->
+  <div class="section" id="sec-analytics">
+    <!-- Period filter -->
+    <div style="background:white;border:1px solid var(--slate-200);border-radius:14px;padding:18px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:600;color:var(--slate-600);">Период:</span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--slate-600);">
+        с <input type="month" id="an-from" style="padding:6px 10px;border:1px solid var(--slate-200);border-radius:8px;font-size:13px;font-family:'Onest',sans-serif;outline:none;">
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--slate-600);">
+        по <input type="month" id="an-to" style="padding:6px 10px;border:1px solid var(--slate-200);border-radius:8px;font-size:13px;font-family:'Onest',sans-serif;outline:none;">
+      </label>
+      <button class="btn btn-primary btn-sm" onclick="renderAnalytics()">Применить</button>
+      <button class="btn btn-outline btn-sm" onclick="resetAnalyticsPeriod()">Сбросить (6 мес.)</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="sc-label">Месяцев в анализе</div>
+        <div class="sc-value" id="an-months">6</div>
+        <div class="sc-sub">в периоде</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Средний доход</div>
+        <div class="sc-value money-pos" id="an-avg-income">—</div>
+        <div class="sc-sub">в месяц</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Средний расход</div>
+        <div class="sc-value money-neg" id="an-avg-expense">—</div>
+        <div class="sc-sub">в месяц</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="sc-label">Средняя прибыль</div>
+        <div class="sc-value" id="an-avg-profit">—</div>
+        <div class="sc-sub">в месяц</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Доходы и расходы по месяцам</h3>
+      <canvas id="chart-bar" height="90"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Чистая прибыль по месяцам</h3>
+      <canvas id="chart-profit" height="70"></canvas>
+    </div>
+
+    <!-- Managers table -->
+    <div class="table-card" id="an-managers-card" style="display:none">
+      <div class="tc-header">
+        <div>
+          <div class="tc-title">👥 Менеджеры ОП — сводная</div>
+          <div class="tc-subtitle">По всем потокам Нейроспринта</div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Менеджер</th><th>Продаж всего</th><th>Потоков</th></tr></thead>
+        <tbody id="an-managers-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</main>
+
+
+<!-- ============ MODALS ============ -->
+
+<!-- INCOME MODAL -->
+<div class="modal-overlay" id="modal-income">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-income-title">💰 Добавить поступление</span>
+      <button class="modal-close" onclick="closeModal('income')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата</label>
+          <input type="date" id="inc-date">
+        </div>
+        <div class="form-group">
+          <label>Сумма, ₽</label>
+          <div class="amount-input-wrap">
+            <span class="amount-prefix">₽</span>
+            <input type="number" id="inc-amount" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Источник / клиент</label>
+        <input type="text" id="inc-source" placeholder="Например: Нарек Погосян — лид-магниты">
+      </div>
+      <div class="form-group">
+        <label>Описание (за что чек)</label>
+        <textarea id="inc-desc" rows="3" placeholder="Подробности: что сделали, какой продукт, какой период..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Тег</label>
+        <select id="inc-tag">
+          <option value="client">Клиент (трекинг/мастер)</option>
+          <option value="neuro">Нейроспринт</option>
+          <option value="consult">Консультация</option>
+          <option value="other">Другое</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('income')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveIncome()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal-overlay" id="modal-expense">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-expense-title">📤 Добавить расход</span>
+      <button class="modal-close" onclick="closeModal('expense')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата</label>
+          <input type="date" id="exp-date">
+        </div>
+        <div class="form-group">
+          <label>Сумма, ₽</label>
+          <div class="amount-input-wrap">
+            <span class="amount-prefix">₽</span>
+            <input type="number" id="exp-amount" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>На что / кому</label>
+        <input type="text" id="exp-name" placeholder="Например: Реклама ВКонтакте">
+      </div>
+      <div class="form-group">
+        <label>Категория</label>
+        <select id="exp-category">
+          <option value="team">Команда / зарплаты</option>
+          <option value="ads">Реклама</option>
+          <option value="tools">Сервисы / инструменты</option>
+          <option value="tax">Налоги / комиссии</option>
+          <option value="content">Контент / дизайн</option>
+          <option value="other">Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Комментарий</label>
+        <textarea id="exp-desc" rows="2" placeholder="Детали..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('expense')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveExpense()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🤝 Новый клиент</span>
+      <button class="modal-close" onclick="closeModal('client')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Имя / название</label>
+          <input type="text" id="cl-name" placeholder="Нарек Погосян">
+        </div>
+        <div class="form-group">
+          <label>Формат работы</label>
+          <select id="cl-type">
+            <option value="tracking">Трекинг</option>
+            <option value="master">Мастер-группа</option>
+            <option value="project">Проект</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Старт</label>
+          <input type="date" id="cl-start">
+        </div>
+        <div class="form-group">
+          <label>Дедлайн / финиш</label>
+          <input type="date" id="cl-end">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Статус</label>
+        <select id="cl-status">
+          <option value="active">В работе</option>
+          <option value="new">Новый (договор)</option>
+          <option value="done">Завершён</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Что делаем (задачи / deliverables)</label>
+        <textarea id="cl-tasks" rows="3" placeholder="Лид-магниты, Telegram-бот, AI-бот, личный бренд..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ссылка на чат</label>
+          <input type="text" id="cl-chat" placeholder="https://t.me/...">
+        </div>
+        <div class="form-group">
+          <label>Ссылка на холст / папку</label>
+          <input type="text" id="cl-canvas" placeholder="https://...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Контактное лицо / заметки</label>
+        <input type="text" id="cl-notes" placeholder="Заметки, контакт, особенности...">
+      </div>
+      <div class="form-group">
+        <label>Договор (PDF, Word, изображение)</label>
+        <div id="cl-contract-wrap" style="border:1.5px dashed var(--slate-200);border-radius:9px;padding:14px 16px;text-align:center;cursor:pointer;transition:border-color .15s;background:var(--slate-50)" onclick="document.getElementById('cl-contract-input').click()" id="cl-drop-zone">
+          <div id="cl-contract-label" style="font-size:13px;color:var(--slate-400)">📎 Нажми или перетащи файл сюда</div>
+          <input type="file" id="cl-contract-input" style="display:none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="handleContractFile(this)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('client')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveClient()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT DRAWER -->
+<div class="drawer-overlay" id="client-drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="client-drawer">
+  <div class="drawer-head">
+    <div class="drawer-head-info">
+      <div class="drawer-name" id="drawer-client-name">—</div>
+      <div class="drawer-meta" id="drawer-client-meta"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+
+    <!-- TASKS -->
+    <div>
+      <div class="drawer-section-title">
+        <span>✅ Задачи по проекту</span>
+        <button class="btn btn-outline btn-sm" onclick="toggleImportBox()" id="import-toggle-btn">+ Добавить список</button>
+      </div>
+
+      <div class="task-import-box" id="task-import-box" style="display:none">
+        <textarea id="task-import-text" placeholder="Вставь список задач — каждая с новой строки:&#10;Разработать стратегию&#10;Написать контент-план&#10;Настроить чат-бот&#10;..."></textarea>
+        <div class="task-import-hint">Каждая строка станет отдельной задачей. Пустые строки игнорируются.</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="importTasks()">Создать задачи</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleImportBox()">Отмена</button>
+        </div>
+      </div>
+
+      <div id="task-progress-wrap" style="display:none">
+        <div class="task-progress-row">
+          <div class="task-progress-bar"><div class="task-progress-fill" id="task-progress-fill"></div></div>
+          <div class="task-progress-text" id="task-progress-text">0 / 0</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;font-size:12px;color:var(--slate-500)">
+          <span id="tasks-done-count">0 сделано</span>
+          <span>·</span>
+          <span id="tasks-delivered-count">0 отдано клиенту</span>
+        </div>
+      </div>
+
+      <div id="tasks-list">
+        <div style="text-align:center;color:var(--slate-300);padding:20px 0;font-size:13px">Задачи не добавлены</div>
+      </div>
+    </div>
+
+    <!-- COMMENTS -->
+    <div>
+      <div class="drawer-section-title">📝 Рабочий журнал</div>
+      <div class="comment-input-row">
+        <textarea id="comment-input" placeholder="Добавь заметку о прогрессе, звонке, договорённости..."></textarea>
+        <button class="btn btn-primary btn-sm" style="align-self:flex-end;white-space:nowrap" onclick="addComment()">Добавить</button>
+      </div>
+      <div id="comments-list">
+        <div style="text-align:center;color:var(--slate-300);padding:20px 0;font-size:13px">Заметок пока нет</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- STREAM MODAL -->
+<div class="modal-overlay" id="modal-stream">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-stream-title">⚡ Новый поток</span>
+      <button class="modal-close" onclick="closeModal('stream')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Курс</label>
+          <input type="text" id="st-course" placeholder="X5, Маркетинг 2.0...">
+        </div>
+        <div class="form-group">
+          <label>Название потока</label>
+          <input type="text" id="st-name" placeholder="Поток 1, Поток 2...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Дата старта</label>
+        <input type="date" id="st-start">
+      </div>
+
+      <!-- Тарифы -->
+      <div style="background:var(--slate-50);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:14px;">Тарифы</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Стандарт — кол-во</label>
+            <input type="number" id="st-t1" placeholder="0" min="0">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Стандарт — сумма продаж, ₽</label>
+            <div class="amount-input-wrap">
+              <span class="amount-prefix">₽</span>
+              <input type="number" id="st-p1" placeholder="0">
+            </div>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Бизнес — кол-во</label>
+            <input type="number" id="st-t2" placeholder="0" min="0">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Бизнес — сумма продаж, ₽</label>
+            <div class="amount-input-wrap">
+              <span class="amount-prefix">₽</span>
+              <input type="number" id="st-p2" placeholder="0">
+            </div>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Мастер-группа — кол-во</label>
+            <input type="number" id="st-t3" placeholder="0" min="0">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Мастер-группа — сумма продаж, ₽</label>
+            <div class="amount-input-wrap">
+              <span class="amount-prefix">₽</span>
+              <input type="number" id="st-p3" placeholder="0">
+            </div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:10px">
+          💡 Мастер-группа учитывается в разделе Клиенты — здесь только для сводки потока
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Менеджеры ОП</label>
+        <table class="mgr-table">
+          <thead><tr>
+            <th>Имя</th>
+            <th>Продаж (шт)</th>
+            <th>Сумма, ₽</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="mgr-rows"></tbody>
+        </table>
+        <button type="button" class="mgr-add-btn" onclick="addMgrRow()">+ Добавить менеджера</button>
+      </div>
+      <div class="form-group">
+        <label>Заметки по потоку</label>
+        <textarea id="st-notes" rows="2" placeholder="Особенности, изменения, важные детали..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('stream')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveStream()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ===== STATE =====
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0-indexed
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_RU_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const CAT_LABELS = { team:'Команда', ads:'Реклама', tools:'Сервисы', tax:'Налоги', content:'Контент', other:'Другое' };
+const TAG_LABELS = { client:'Клиент', neuro:'Нейроспринт', consult:'Консультация', other:'Другое' };
+const TYPE_LABELS = { tracking:'Трекинг', master:'Мастер-группа', project:'Проект' };
+const STATUS_COLORS = { active:'badge-green', new:'badge-blue', done:'badge-slate' };
+const STATUS_LABELS = { active:'В работе', new:'Новый', done:'Завершён' };
+
+let chartBar = null;
+let chartProfit = null;
+
+
+// ===== AUTH =====
+let authMode = 'login';
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+  document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+  document.getElementById('auth-btn').textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
+  document.getElementById('auth-error').classList.remove('show');
+}
+
+async function doAuth() {
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.classList.remove('show');
+  if (!username || !password) {
+    errEl.textContent = 'Введите логин и пароль';
+    errEl.classList.add('show');
+    return;
+  }
+  try {
+    const res = await fetch(`/auth/${authMode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Ошибка');
+    localStorage.setItem('aitouch_token', data.access_token);
+    document.getElementById('login-screen').classList.remove('show');
+    renderAll();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('aitouch_token');
+  document.getElementById('login-screen').classList.add('show');
+}
+
+function getToken() {
+  return localStorage.getItem('aitouch_token');
+}
+
+async function api(method, url, body) {
+  const token = getToken();
+  const opts = {
+    method,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (res.status === 401) { logout(); return null; }
+  if (!res.ok) throw new Error(await res.text());
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// Press Enter to login
+document.getElementById('auth-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAuth();
+});
+
+
+// ===== MONTH NAV =====
+function updateMonthDisplay() {
+  document.getElementById('monthDisplay').textContent = MONTHS_RU[currentMonth] + ' ' + currentYear;
+  renderAll();
+}
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  updateMonthDisplay();
+}
+
+
+// ===== SECTION SWITCH =====
+function switchSection(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  el.classList.add('active');
+  const titles = { finance: 'Финансы', clients: 'Клиенты', neuro: 'Нейроспринт', analytics: 'Аналитика' };
+  document.getElementById('topbarTitle').textContent = titles[name];
+  const actions = {
+    finance: `<button class="btn btn-outline btn-sm" onclick="openModal('income')">+ Доход</button>
+              <button class="btn btn-primary btn-sm" onclick="openModal('expense')">+ Расход</button>
+              <button class="btn btn-green btn-sm" onclick="exportExcel()">↓ Excel</button>`,
+    clients: `<button class="btn btn-primary btn-sm" onclick="openModal('client')">+ Новый клиент</button>`,
+    neuro: `<button class="btn btn-primary btn-sm" onclick="openModal('stream')">+ Новый поток</button>`,
+    analytics: ''
+  };
+  document.getElementById('topbarActions').innerHTML = actions[name];
+  if (name === 'analytics') renderAnalytics();
+}
+
+
+// ===== MODALS =====
+function openModal(type) {
+  const today = new Date().toISOString().split('T')[0];
+  if (type === 'income') document.getElementById('inc-date').value = today;
+  if (type === 'expense') document.getElementById('exp-date').value = today;
+  if (type === 'client') document.getElementById('cl-start').value = today;
+  if (type === 'stream') {
+    document.getElementById('st-start').value = today;
+    if (!editingStreamId) { document.getElementById('mgr-rows').innerHTML = ''; addMgrRow(); }
+  }
+  document.getElementById('modal-' + type).classList.add('open');
+}
+function closeModal(type) {
+  document.getElementById('modal-' + type).classList.remove('open');
+  if (type === 'income') {
+    editingIncomeId = null;
+    document.getElementById('modal-income-title').textContent = '💰 Добавить поступление';
+  }
+  if (type === 'expense') {
+    editingExpenseId = null;
+    document.getElementById('modal-expense-title').textContent = '📤 Добавить расход';
+  }
+  if (type === 'stream') {
+    editingStreamId = null;
+    document.getElementById('modal-stream-title').textContent = '⚡ Новый поток';
+  }
+}
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+
+// ===== FORMAT =====
+function fmt(n) {
+  if (n === undefined || n === null || n === '') return '—';
+  return Number(n).toLocaleString('ru-RU') + ' ₽';
+}
+function fmtShort(n) {
+  n = Number(n);
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M ₽';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'K ₽';
+  return n + ' ₽';
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return dd + ' ' + MONTHS_RU_GEN[parseInt(m)-1];
+}
+
+
+// ===== INCOME =====
+let editingIncomeId = null;
+let editingExpenseId = null;
+
+function openEditIncome(i) {
+  editingIncomeId = i.id;
+  document.getElementById('inc-date').value = i.date;
+  document.getElementById('inc-amount').value = i.amount;
+  document.getElementById('inc-source').value = i.source;
+  document.getElementById('inc-desc').value = i.desc;
+  document.getElementById('inc-tag').value = i.tag;
+  document.getElementById('modal-income-title').textContent = '✏️ Редактировать поступление';
+  document.getElementById('modal-income').classList.add('open');
+}
+
+async function saveIncome() {
+  const date = document.getElementById('inc-date').value;
+  const [y, m] = date ? date.split('-').map(Number) : [currentYear, currentMonth + 1];
+  const body = {
+    date,
+    amount: parseFloat(document.getElementById('inc-amount').value) || 0,
+    source: document.getElementById('inc-source').value,
+    desc: document.getElementById('inc-desc').value,
+    tag: document.getElementById('inc-tag').value,
+    year: y,
+    month: m - 1
+  };
+  if (editingIncomeId) {
+    await api('PATCH', `/income/${editingIncomeId}`, body);
+    editingIncomeId = null;
+  } else {
+    await api('POST', '/income', body);
+  }
+  closeModal('income');
+  ['inc-amount','inc-source','inc-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modal-income-title').textContent = '💰 Добавить поступление';
+  renderFinance();
+}
+
+async function deleteIncome(id) {
+  await api('DELETE', `/income/${id}`);
+  renderFinance();
+}
+
+
+// ===== EXPENSE =====
+function openEditExpense(e) {
+  editingExpenseId = e.id;
+  document.getElementById('exp-date').value = e.date;
+  document.getElementById('exp-amount').value = e.amount;
+  document.getElementById('exp-name').value = e.name;
+  document.getElementById('exp-category').value = e.category;
+  document.getElementById('exp-desc').value = e.desc;
+  document.getElementById('modal-expense-title').textContent = '✏️ Редактировать расход';
+  document.getElementById('modal-expense').classList.add('open');
+}
+
+async function saveExpense() {
+  const date = document.getElementById('exp-date').value;
+  const [y, m] = date ? date.split('-').map(Number) : [currentYear, currentMonth + 1];
+  const body = {
+    date,
+    amount: parseFloat(document.getElementById('exp-amount').value) || 0,
+    name: document.getElementById('exp-name').value,
+    category: document.getElementById('exp-category').value,
+    desc: document.getElementById('exp-desc').value,
+    year: y,
+    month: m - 1
+  };
+  if (editingExpenseId) {
+    await api('PATCH', `/expense/${editingExpenseId}`, body);
+    editingExpenseId = null;
+  } else {
+    await api('POST', '/expense', body);
+  }
+  closeModal('expense');
+  ['exp-amount','exp-name','exp-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modal-expense-title').textContent = '📤 Добавить расход';
+  renderFinance();
+}
+
+async function deleteExpense(id) {
+  await api('DELETE', `/expense/${id}`);
+  renderFinance();
+}
+
+
+async function renderFinance() {
+  if (!getToken()) return;
+  const [incomes, expenses] = await Promise.all([
+    api('GET', `/income?year=${currentYear}&month=${currentMonth}`),
+    api('GET', `/expense?year=${currentYear}&month=${currentMonth}`)
+  ]);
+  if (!incomes || !expenses) return;
+
+  const totalInc = incomes.reduce((s,i) => s + i.amount, 0);
+  const totalExp = expenses.reduce((s,e) => s + e.amount, 0);
+  const profit = totalInc - totalExp;
+  const margin = totalInc > 0 ? ((profit / totalInc) * 100).toFixed(0) + '%' : '—';
+
+  document.getElementById('stat-income').textContent = fmtShort(totalInc);
+  document.getElementById('stat-income-count').textContent = incomes.length + ' поступлений';
+  document.getElementById('stat-expense').textContent = fmtShort(totalExp);
+  document.getElementById('stat-expense-count').textContent = expenses.length + ' платежей';
+  document.getElementById('stat-profit').textContent = fmtShort(profit);
+  document.getElementById('stat-profit-sub').textContent = profit >= 0 ? 'профицит' : 'дефицит';
+  document.getElementById('stat-margin').textContent = margin;
+  document.getElementById('sidebarBalance').textContent = fmtShort(profit);
+  document.getElementById('sidebarBalanceSub').textContent = profit >= 0 ? '▲ профицит' : '▼ дефицит';
+
+  const ib = document.getElementById('income-table-body');
+  if (incomes.length === 0) {
+    ib.innerHTML = '<tr class="empty-row"><td colspan="4">Нет поступлений за этот период</td></tr>';
+  } else {
+    ib.innerHTML = incomes.sort((a,b) => b.date.localeCompare(a.date)).map(i => `
+      <tr>
+        <td style="color:var(--slate-500);font-size:12px">${fmtDate(i.date)}</td>
+        <td>
+          <div style="font-weight:600;font-size:13px">${i.source || '—'}</div>
+          ${i.desc ? `<div style="font-size:11px;color:var(--slate-400);margin-top:2px">${i.desc.substring(0,80)}${i.desc.length>80?'...':''}</div>` : ''}
+          <span class="badge badge-blue" style="margin-top:4px">${TAG_LABELS[i.tag]||i.tag}</span>
+        </td>
+        <td><span class="money-pos">${fmt(i.amount)}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="edit-btn" onclick='openEditIncome(${JSON.stringify(i)})' title="Редактировать">✎</button>
+            <button class="del-btn" onclick="deleteIncome(${i.id})" title="Удалить">✕</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  const eb = document.getElementById('expense-table-body');
+  if (expenses.length === 0) {
+    eb.innerHTML = '<tr class="empty-row"><td colspan="5">Нет расходов за этот период</td></tr>';
+  } else {
+    eb.innerHTML = expenses.sort((a,b) => b.date.localeCompare(a.date)).map(e => `
+      <tr>
+        <td style="color:var(--slate-500);font-size:12px">${fmtDate(e.date)}</td>
+        <td>
+          <div style="font-weight:600;font-size:13px">${e.name || '—'}</div>
+          ${e.desc ? `<div style="font-size:11px;color:var(--slate-400);margin-top:2px">${e.desc.substring(0,60)}${e.desc.length>60?'...':''}</div>` : ''}
+        </td>
+        <td><span class="badge badge-slate">${CAT_LABELS[e.category]||e.category}</span></td>
+        <td><span class="money-neg">${fmt(e.amount)}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="edit-btn" onclick='openEditExpense(${JSON.stringify(e)})' title="Редактировать">✎</button>
+            <button class="del-btn" onclick="deleteExpense(${e.id})" title="Удалить">✕</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+}
+
+
+// ===== CLIENTS =====
+let pendingContractFile = null; // File object waiting to be uploaded
+
+function handleContractFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  pendingContractFile = file;
+  document.getElementById('cl-contract-label').innerHTML =
+    `📄 <strong>${file.name}</strong> <span style="color:var(--slate-400);font-size:11px">(${(file.size/1024).toFixed(0)} КБ)</span>`;
+  document.getElementById('cl-contract-wrap').style.borderColor = 'var(--blue-400)';
+}
+
+async function uploadContractFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch('/upload/contract', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+    body: formData
+  });
+  if (!res.ok) return '';
+  const data = await res.json();
+  return JSON.stringify({ filename: data.filename, original: data.original });
+}
+
+async function saveClient() {
+  let contractFile = '';
+  if (pendingContractFile) {
+    contractFile = await uploadContractFile(pendingContractFile);
+    pendingContractFile = null;
+  }
+  await api('POST', '/clients', {
+    name: document.getElementById('cl-name').value,
+    type: document.getElementById('cl-type').value,
+    start: document.getElementById('cl-start').value,
+    end: document.getElementById('cl-end').value,
+    amount: 0,
+    status: document.getElementById('cl-status').value,
+    tasks: document.getElementById('cl-tasks').value,
+    chat: document.getElementById('cl-chat').value,
+    canvas: document.getElementById('cl-canvas').value,
+    notes: document.getElementById('cl-notes').value,
+    contract_file: contractFile
+  });
+  closeModal('client');
+  ['cl-name','cl-tasks','cl-chat','cl-canvas','cl-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cl-amount').value = '';
+  document.getElementById('cl-contract-input').value = '';
+  document.getElementById('cl-contract-label').innerHTML = '📎 Нажми или перетащи файл сюда';
+  document.getElementById('cl-contract-wrap').style.borderColor = '';
+  renderClients();
+}
+
+async function deleteClient(id) {
+  await api('DELETE', `/clients/${id}`);
+  renderClients();
+}
+
+function clientDaysProgress(c) {
+  if (!c.start || !c.end) return null;
+  const s = new Date(c.start), e = new Date(c.end), now = new Date();
+  const total = e - s, passed = now - s;
+  if (total <= 0) return 100;
+  return Math.min(100, Math.max(0, Math.round((passed / total) * 100)));
+}
+
+async function renderClients() {
+  if (!getToken()) return;
+  const clients = await api('GET', '/clients');
+  if (!clients) return;
+
+  const active = clients.filter(c => c.status === 'active').length;
+  const tracking = clients.filter(c => c.type === 'tracking').length;
+  const master = clients.filter(c => c.type === 'master').length;
+  document.getElementById('cl-stat-active').textContent = active;
+  document.getElementById('cl-stat-tracking').textContent = tracking;
+  document.getElementById('cl-stat-master').textContent = master;
+  document.getElementById('cl-stat-total').textContent = clients.length;
+  document.getElementById('clientsBadge').textContent = active;
+
+  const grid = document.getElementById('clients-grid');
+  if (clients.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--slate-400);padding:60px 0;font-size:14px;">Добавь первого клиента →</div>';
+    return;
+  }
+  grid.innerHTML = clients.map(c => {
+    const prog = clientDaysProgress(c);
+    const progColor = prog !== null && prog > 75 ? 'amber' : '';
+    return `
+    <div class="client-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="cc-name">${c.name}</div>
+          <div class="cc-type">${TYPE_LABELS[c.type]||c.type}</div>
+        </div>
+        <span class="badge ${STATUS_COLORS[c.status]||'badge-slate'}">${STATUS_LABELS[c.status]||c.status}</span>
+      </div>
+      <div class="cc-meta">
+        <div class="cc-row"><span>Старт</span><span>${fmtDate(c.start)}</span></div>
+        ${c.end ? `<div class="cc-row"><span>Финиш</span><span>${fmtDate(c.end)}</span></div>` : ''}
+      </div>
+      ${prog !== null ? `
+      <div class="cc-progress">
+        <div class="cc-progress-label"><span>Прогресс</span><span>${prog}%</span></div>
+        <div class="progress-bar"><div class="progress-fill ${progColor}" style="width:${prog}%"></div></div>
+      </div>` : ''}
+      ${c.tasks ? `<div style="margin-top:10px;font-size:12px;color:var(--slate-500);border-top:1px solid var(--slate-100);padding-top:10px;line-height:1.5">${c.tasks.substring(0,120)}${c.tasks.length>120?'...':''}</div>` : ''}
+      <div class="cc-links">
+        ${c.chat ? `<a href="${c.chat}" target="_blank" class="cc-link">💬 Чат</a>` : ''}
+        ${c.canvas ? `<a href="${c.canvas}" target="_blank" class="cc-link">📋 Холст</a>` : ''}
+        ${(() => { try { const cf = c.contract_file ? JSON.parse(c.contract_file) : null; return cf ? `<a href="/upload/contract/${cf.filename}?token=${getToken()}" onclick="downloadContract(event,'${cf.filename}','${cf.original}')" class="cc-link">📄 Договор</a>` : ''; } catch(e){ return ''; } })()}
+      </div>
+      ${c.notes ? `<div style="margin-top:8px;font-size:11px;color:var(--slate-400)">${c.notes}</div>` : ''}
+      <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+        <button class="btn btn-outline btn-sm" onclick="openDrawer(${c.id})" style="font-size:12px">Открыть карточку →</button>
+        <button class="del-btn" onclick="deleteClient(${c.id})" title="Удалить">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+// ===== NEURO =====
+let activeCourseName = '__all__';
+let activeMgrFilter = '__all__';
+let editingStreamId = null;
+
+// --- Manager rows ---
+function addMgrRow(name='', sales='', amount='') {
+  const tbody = document.getElementById('mgr-rows');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Имя" value="${escAttr(name)}"></td>
+    <td><input type="number" placeholder="0" min="0" value="${sales}" style="width:80px"></td>
+    <td class="amount-col"><input type="number" placeholder="0" value="${amount}"></td>
+    <td><button type="button" class="del-btn" onclick="this.closest('tr').remove()" style="margin-top:2px">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function escAttr(s) { return String(s||'').replace(/"/g,'&quot;'); }
+
+function getMgrRows() {
+  const rows = document.querySelectorAll('#mgr-rows tr');
+  const result = [];
+  rows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const name = inputs[0].value.trim();
+    const sales = parseInt(inputs[1].value) || 0;
+    const amount = parseFloat(inputs[2].value) || 0;
+    if (name) result.push({ name, sales, amount });
+  });
+  return result;
+}
+
+function loadMgrRows(managers) {
+  document.getElementById('mgr-rows').innerHTML = '';
+  let parsed = [];
+  try { parsed = JSON.parse(managers || '[]'); } catch(e) {
+    // legacy text format: "Дима — 12"
+    (managers || '').split('\n').filter(Boolean).forEach(line => {
+      const parts = line.split(/[-—]/);
+      parsed.push({ name: parts[0]?.trim() || line, sales: parseInt(parts[1]) || 0, amount: 0 });
+    });
+  }
+  if (parsed.length === 0) addMgrRow();
+  else parsed.forEach(m => addMgrRow(m.name, m.sales, m.amount));
+}
+
+function openEditStream(st) {
+  editingStreamId = st.id;
+  document.getElementById('st-course').value = st.course || '';
+  document.getElementById('st-name').value = st.name || '';
+  document.getElementById('st-start').value = st.start || '';
+  document.getElementById('st-t1').value = st.t1 || '';
+  document.getElementById('st-t2').value = st.t2 || '';
+  document.getElementById('st-t3').value = st.t3 || '';
+  document.getElementById('st-p1').value = st.p1 || '';
+  document.getElementById('st-p2').value = st.p2 || '';
+  document.getElementById('st-p3').value = st.p3 || '';
+  document.getElementById('st-notes').value = st.notes || '';
+  loadMgrRows(st.managers || '');
+  document.getElementById('modal-stream-title').textContent = '✏️ Редактировать поток';
+  document.getElementById('modal-stream').classList.add('open');
+}
+
+async function saveStream() {
+  const t1 = parseInt(document.getElementById('st-t1').value) || 0;
+  const t2 = parseInt(document.getElementById('st-t2').value) || 0;
+  const t3 = parseInt(document.getElementById('st-t3').value) || 0;
+  const p1 = parseFloat(document.getElementById('st-p1').value) || 0;
+  const p2 = parseFloat(document.getElementById('st-p2').value) || 0;
+  const p3 = parseFloat(document.getElementById('st-p3').value) || 0;
+  const course = document.getElementById('st-course').value.trim();
+  const body = {
+    course,
+    name: document.getElementById('st-name').value,
+    start: document.getElementById('st-start').value,
+    t1, t2, t3, p1, p2, p3,
+    managers: JSON.stringify(getMgrRows()),
+    notes: document.getElementById('st-notes').value
+  };
+  if (editingStreamId) {
+    await api('PATCH', `/streams/${editingStreamId}`, body);
+    editingStreamId = null;
+  } else {
+    await api('POST', '/streams', body);
+    if (course) activeCourseName = course;
+  }
+  closeModal('stream');
+  ['st-course','st-name','st-notes'].forEach(id => document.getElementById(id).value = '');
+  ['st-t1','st-t2','st-t3','st-p1','st-p2','st-p3'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mgr-rows').innerHTML = '';
+  document.getElementById('modal-stream-title').textContent = '⚡ Новый поток';
+  renderNeuro();
+}
+
+async function deleteStream(id) {
+  await api('DELETE', `/streams/${id}`);
+  renderNeuro();
+}
+
+function switchCourseTab(course) {
+  activeCourseName = course;
+  activeMgrFilter = '__all__';
+  renderNeuro();
+}
+
+function switchMgrFilter(name) {
+  activeMgrFilter = name;
+  renderNeuro();
+}
+
+function parseMgrs(managers) {
+  try { return JSON.parse(managers || '[]'); } catch(e) { return []; }
+}
+
+async function renderNeuro() {
+  if (!getToken()) return;
+  const streams = await api('GET', '/streams');
+  if (!streams) return;
+
+  // Сводные цифры
+  const totalStudents = streams.reduce((s,st) => s + st.t1 + st.t2, 0); // без МГ
+  const totalRevenue = streams.reduce((s,st) => s + st.t1*st.p1 + st.t2*st.p2 + st.t3*st.p3, 0);
+  const courses = [...new Set(streams.map(s => s.course).filter(Boolean))];
+
+  document.getElementById('ns-stat-courses').textContent = courses.length;
+  document.getElementById('ns-stat-streams').textContent = streams.length;
+  document.getElementById('ns-stat-students').textContent = totalStudents;
+  document.getElementById('ns-stat-revenue').textContent = fmtShort(totalRevenue);
+  document.getElementById('neuroBadge').textContent = streams.length;
+
+  // Вкладки курсов
+  const tabsEl = document.getElementById('course-tabs');
+  const allActive = activeCourseName === '__all__';
+  tabsEl.innerHTML = `
+    <div class="course-tab all ${allActive ? 'active' : ''}" onclick="switchCourseTab('__all__')">Все курсы</div>
+    ${courses.map(c => `
+      <div class="course-tab ${activeCourseName === c ? 'active' : ''}" onclick="switchCourseTab('${c.replace(/'/g,"\\'")}')">⚡ ${c}</div>
+    `).join('')}
+  `;
+
+  // Все менеджеры для фильтра
+  const allMgrs = {};
+  streams.forEach(st => {
+    parseMgrs(st.managers).forEach(m => {
+      if (!allMgrs[m.name]) allMgrs[m.name] = { sales: 0, amount: 0, streams: new Set() };
+      allMgrs[m.name].sales += m.sales;
+      allMgrs[m.name].amount += m.amount;
+      allMgrs[m.name].streams.add(st.id);
+    });
+  });
+  const mgrNames = Object.keys(allMgrs);
+
+  // Фильтр-чипсы менеджеров
+  const mgrFilterWrap = document.getElementById('mgr-filter-wrap');
+  const mgrChips = document.getElementById('mgr-filter-chips');
+  if (mgrNames.length > 0) {
+    mgrFilterWrap.style.display = 'block';
+    mgrChips.innerHTML = `
+      <div class="mgr-filter-chip ${activeMgrFilter==='__all__'?'active':''}" onclick="switchMgrFilter('__all__')">Все менеджеры</div>
+      ${mgrNames.map(n => `<div class="mgr-filter-chip ${activeMgrFilter===n?'active':''}" onclick="switchMgrFilter('${n.replace(/'/g,"\\'")}')">👤 ${n}</div>`).join('')}
+    `;
+  } else {
+    mgrFilterWrap.style.display = 'none';
+  }
+
+  // Сводная таблица менеджеров
+  const mgrStatWrap = document.getElementById('mgr-stat-wrap');
+  const mgrStatBody = document.getElementById('mgr-stat-body');
+  if (mgrNames.length > 0) {
+    mgrStatWrap.style.display = 'block';
+    mgrStatBody.innerHTML = Object.entries(allMgrs)
+      .sort((a,b) => b[1].amount - a[1].amount)
+      .map(([name, d]) => `
+        <tr>
+          <td style="font-weight:600">${name}</td>
+          <td>${d.sales}</td>
+          <td><span class="money-pos">${fmt(d.amount)}</span></td>
+          <td>${d.streams.size}</td>
+          <td><span class="money-neu">${d.sales > 0 ? fmt(Math.round(d.amount / d.sales)) : '—'}</span></td>
+        </tr>`).join('');
+  } else {
+    mgrStatWrap.style.display = 'none';
+  }
+
+  // Фильтр потоков по курсу + менеджеру
+  let filtered = activeCourseName === '__all__' ? streams : streams.filter(s => s.course === activeCourseName);
+  if (activeMgrFilter !== '__all__') {
+    filtered = filtered.filter(st => parseMgrs(st.managers).some(m => m.name === activeMgrFilter));
+  }
+
+  const list = document.getElementById('streams-list');
+  if (streams.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--slate-400);padding:60px 0;font-size:14px;">Добавь первый поток →</div>';
+    return;
+  }
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--slate-400);padding:40px 0;font-size:14px;">Нет потоков для этого курса</div>';
+    return;
+  }
+
+  // Если показываем все — группируем по курсу
+  const groups = activeCourseName === '__all__'
+    ? groupBy(filtered, 'course')
+    : { [activeCourseName || 'Без курса']: filtered };
+
+  list.innerHTML = Object.entries(groups).map(([courseName, courseStreams]) => `
+    <div style="margin-bottom:28px">
+      ${activeCourseName === '__all__' ? `<div style="font-size:12px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span>⚡ ${courseName || 'Без курса'}</span><span style="font-weight:400;color:var(--slate-300)">— ${courseStreams.length} ${courseStreams.length===1?'поток':'потоков'}</span></div>` : ''}
+      ${courseStreams.map(st => renderStreamCard(st)).join('')}
+    </div>
+  `).join('');
+}
+
+function groupBy(arr, key) {
+  return arr.reduce((acc, item) => {
+    const k = item[key] || 'Без курса';
+    if (!acc[k]) acc[k] = [];
+    acc[k].push(item);
+    return acc;
+  }, {});
+}
+
+function renderStreamCard(st) {
+  const revenue = st.t1*st.p1 + st.t2*st.p2 + st.t3*st.p3;
+  const totalAll = st.t1 + st.t2 + st.t3;
+  const mgrs = parseMgrs(st.managers);
+  return `
+  <div class="stream-card">
+    <div class="stream-header">
+      <div>
+        <div class="stream-title">${st.name || 'Поток'}</div>
+        <div class="stream-date">Старт: ${fmtDate(st.start)}${st.course ? ' · ' + st.course : ''}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:white">${fmtShort(revenue)}</span>
+        <button class="edit-btn" style="color:rgba(255,255,255,0.7);font-size:16px" onclick='openEditStream(${JSON.stringify(st)})' title="Редактировать">✎</button>
+        <button class="del-btn" style="color:rgba(255,255,255,0.5)" onclick="deleteStream(${st.id})">✕</button>
+      </div>
+    </div>
+    <div class="stream-body">
+      <div class="stream-stats">
+        <div class="ss-item"><div class="ss-value">${totalAll}</div><div class="ss-label">Всего</div></div>
+        <div class="ss-item"><div class="ss-value">${st.t1}</div><div class="ss-label">Стандарт</div></div>
+        <div class="ss-item"><div class="ss-value">${st.t2}</div><div class="ss-label">Бизнес</div></div>
+        <div class="ss-item"><div class="ss-value">${st.t3}</div><div class="ss-label">Мастер-гр.</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="section-title" style="margin-bottom:8px">Тарифы</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:var(--slate-500)">Стандарт × ${st.t1}</span>
+              <span class="money-neu">${fmt(st.t1 * st.p1)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:var(--slate-500)">Бизнес × ${st.t2}</span>
+              <span class="money-neu">${fmt(st.t2 * st.p2)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:var(--slate-500)">Мастер-гр. × ${st.t3}</span>
+              <span class="money-neu">${fmt(st.t3 * st.p3)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;border-top:1px solid var(--slate-100);padding-top:6px;margin-top:2px">
+              <span style="font-weight:600;color:var(--slate-700)">Итого</span>
+              <span class="money-pos">${fmt(revenue)}</span>
+            </div>
+          </div>
+        </div>
+        ${mgrs.length > 0 ? `
+        <div>
+          <div class="section-title" style="margin-bottom:8px">Менеджеры ОП</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            ${mgrs.map(m => `
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+                <span style="color:var(--slate-600)">${m.name}</span>
+                <div style="display:flex;gap:6px;align-items:center">
+                  ${m.sales ? `<span class="badge badge-blue">${m.sales} прод.</span>` : ''}
+                  ${m.amount ? `<span class="money-neu" style="font-size:12px">${fmtShort(m.amount)}</span>` : ''}
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+      </div>
+      ${st.notes ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--slate-100);font-size:12px;color:var(--slate-500)">${st.notes}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+
+// ===== CLIENT DRAWER =====
+let drawerClientId = null;
+let drawerClients = [];
+
+async function openDrawer(clientId) {
+  drawerClientId = clientId;
+  // find client in cached list
+  const clients = await api('GET', '/clients');
+  drawerClients = clients || [];
+  const c = drawerClients.find(x => x.id === clientId);
+  if (!c) return;
+
+  document.getElementById('drawer-client-name').textContent = c.name;
+  const metaParts = [
+    TYPE_LABELS[c.type] || c.type,
+    STATUS_LABELS[c.status] || c.status,
+    c.start ? `Старт: ${fmtDate(c.start)}` : '',
+    c.end ? `Финиш: ${fmtDate(c.end)}` : ''
+  ].filter(Boolean);
+  document.getElementById('drawer-client-meta').innerHTML = metaParts
+    .map(p => `<span>${p}</span>`).join('');
+
+  // reset import box
+  document.getElementById('task-import-box').style.display = 'none';
+  document.getElementById('task-import-text').value = '';
+  document.getElementById('import-toggle-btn').textContent = '+ Добавить список';
+
+  document.getElementById('client-drawer-overlay').classList.add('open');
+  document.getElementById('client-drawer').classList.add('open');
+
+  await Promise.all([loadDrawerTasks(), loadDrawerComments()]);
+}
+
+function closeDrawer() {
+  document.getElementById('client-drawer-overlay').classList.remove('open');
+  document.getElementById('client-drawer').classList.remove('open');
+  drawerClientId = null;
+}
+
+function toggleImportBox() {
+  const box = document.getElementById('task-import-box');
+  const btn = document.getElementById('import-toggle-btn');
+  const visible = box.style.display !== 'none';
+  box.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '+ Добавить список' : 'Свернуть';
+  if (!visible) document.getElementById('task-import-text').focus();
+}
+
+async function importTasks() {
+  const raw = document.getElementById('task-import-text').value;
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return;
+
+  // get current max order
+  const existing = await api('GET', `/clients/${drawerClientId}/tasks`);
+  const startOrder = existing ? existing.length : 0;
+
+  const body = lines.map((text, i) => ({ text, order: startOrder + i }));
+  await api('POST', `/clients/${drawerClientId}/tasks/bulk`, body);
+
+  document.getElementById('task-import-text').value = '';
+  toggleImportBox();
+  await loadDrawerTasks();
+}
+
+async function loadDrawerTasks() {
+  const tasks = await api('GET', `/clients/${drawerClientId}/tasks`);
+  if (!tasks) return;
+
+  const list = document.getElementById('tasks-list');
+  const progWrap = document.getElementById('task-progress-wrap');
+
+  if (tasks.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--slate-300);padding:20px 0;font-size:13px">Задачи не добавлены</div>';
+    progWrap.style.display = 'none';
+    return;
+  }
+
+  const doneCount = tasks.filter(t => t.done).length;
+  const deliveredCount = tasks.filter(t => t.delivered).length;
+  const pct = Math.round((doneCount / tasks.length) * 100);
+
+  progWrap.style.display = 'block';
+  const fill = document.getElementById('task-progress-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'task-progress-fill' + (pct === 100 ? ' green' : '');
+  document.getElementById('task-progress-text').textContent = `${doneCount} / ${tasks.length}`;
+  document.getElementById('tasks-done-count').textContent = `${doneCount} сделано`;
+  document.getElementById('tasks-delivered-count').textContent = `${deliveredCount} отдано клиенту`;
+
+  list.innerHTML = tasks.map((t, idx) => `
+    <div class="task-item ${t.done ? 'done-item' : ''}" id="task-item-${t.id}">
+      <div class="task-num">${idx + 1}</div>
+      <div class="task-text">${escHtml(t.text)}</div>
+      <div class="task-checks">
+        <label class="task-check-label" title="Сделано">
+          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id},'done',this.checked)">
+          <span>Сделано</span>
+        </label>
+        <label class="task-check-label" title="Отдано клиенту">
+          <input type="checkbox" ${t.delivered ? 'checked' : ''} onchange="toggleTask(${t.id},'delivered',this.checked)">
+          <span>Отдано</span>
+        </label>
+      </div>
+      <button class="task-del" onclick="deleteTask(${t.id})" title="Удалить">✕</button>
+    </div>`).join('');
+}
+
+async function toggleTask(taskId, field, value) {
+  await api('PATCH', `/clients/${drawerClientId}/tasks/${taskId}`, { [field]: value });
+  await loadDrawerTasks();
+}
+
+async function deleteTask(taskId) {
+  await api('DELETE', `/clients/${drawerClientId}/tasks/${taskId}`);
+  await loadDrawerTasks();
+}
+
+async function loadDrawerComments() {
+  const comments = await api('GET', `/clients/${drawerClientId}/comments`);
+  if (!comments) return;
+  const list = document.getElementById('comments-list');
+  if (comments.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--slate-300);padding:20px 0;font-size:13px">Заметок пока нет</div>';
+    return;
+  }
+  list.innerHTML = comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-date">📅 ${c.created_at}</div>
+      <div class="comment-text">${escHtml(c.text)}</div>
+      <button class="comment-del" onclick="deleteComment(${c.id})">✕</button>
+    </div>`).join('');
+}
+
+async function addComment() {
+  const text = document.getElementById('comment-input').value.trim();
+  if (!text) return;
+  await api('POST', `/clients/${drawerClientId}/comments`, { text });
+  document.getElementById('comment-input').value = '';
+  await loadDrawerComments();
+}
+
+async function deleteComment(commentId) {
+  await api('DELETE', `/clients/${drawerClientId}/comments/${commentId}`);
+  await loadDrawerComments();
+}
+
+// Ctrl+Enter to add comment
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    const input = document.getElementById('comment-input');
+    if (document.activeElement === input) addComment();
+  }
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== ANALYTICS =====
+function resetAnalyticsPeriod() {
+  document.getElementById('an-from').value = '';
+  document.getElementById('an-to').value = '';
+  renderAnalytics();
+}
+
+async function renderAnalytics() {
+  if (!getToken()) return;
+
+  const fromVal = document.getElementById('an-from').value;
+  const toVal = document.getElementById('an-to').value;
+
+  let data;
+  if (fromVal && toVal) {
+    const [fy, fm] = fromVal.split('-').map(Number);
+    const [ty, tm] = toVal.split('-').map(Number);
+    // Build list of year/month pairs in range
+    const pairs = [];
+    let y = fy, m = fm - 1;
+    while (y < ty || (y === ty && m <= tm - 1)) {
+      pairs.push({ year: y, month: m });
+      m++; if (m > 11) { m = 0; y++; }
+    }
+    // Fetch each month individually (reuse analytics endpoint per-month)
+    const results = await Promise.all(pairs.map(p =>
+      api('GET', `/analytics/monthly?months=1`).then(d => {
+        // We need a different approach — fetch all months and filter
+        return p;
+      })
+    ));
+    // Better: fetch a large range and filter
+    const totalMonths = (ty - fy) * 12 + (tm - fm) + 1;
+    data = await api('GET', `/analytics/monthly?months=${Math.max(totalMonths + 1, 1)}`);
+    if (!data) return;
+    data = data.filter(d => {
+      const afterFrom = d.year > fy || (d.year === fy && d.month >= fm - 1);
+      const beforeTo = d.year < ty || (d.year === ty && d.month <= tm - 1);
+      return afterFrom && beforeTo;
+    });
+  } else {
+    data = await api('GET', '/analytics/monthly?months=6');
+    if (!data) return;
+  }
+
+  document.getElementById('an-months').textContent = data.length;
+
+  const incomes = data.map(d => d.income);
+  const expenses = data.map(d => d.expense);
+  const profits = data.map(d => d.profit);
+  const labels = data.map(d => MONTHS_RU[d.month].substring(0,3) + ' ' + d.year);
+
+  const n = data.length || 1;
+  document.getElementById('an-avg-income').textContent = fmtShort(incomes.reduce((s,v)=>s+v,0) / n);
+  document.getElementById('an-avg-expense').textContent = fmtShort(expenses.reduce((s,v)=>s+v,0) / n);
+  document.getElementById('an-avg-profit').textContent = fmtShort(profits.reduce((s,v)=>s+v,0) / n);
+
+  // Bar chart
+  if (chartBar) chartBar.destroy();
+  chartBar = new Chart(document.getElementById('chart-bar').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Доходы', data: incomes, backgroundColor: '#22c55e', borderRadius: 6 },
+        { label: 'Расходы', data: expenses, backgroundColor: '#f87171', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => fmtShort(v) } } }
+    }
+  });
+
+  // Profit line chart
+  if (chartProfit) chartProfit.destroy();
+  chartProfit = new Chart(document.getElementById('chart-profit').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Чистая прибыль',
+        data: profits,
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+        fill: true, tension: 0.4,
+        pointBackgroundColor: '#2563eb', pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => fmtShort(v) } } }
+    }
+  });
+
+  // Managers table — aggregate across all streams
+  const streams = await api('GET', '/streams');
+  if (streams && streams.length > 0) {
+    const managerMap = {};
+    streams.forEach(st => {
+      (st.managers || '').split('\n').filter(Boolean).forEach(line => {
+        const parts = line.split('—');
+        const name = parts[0]?.trim();
+        const sales = parseInt(parts[1]?.trim()) || 0;
+        if (!name) return;
+        if (!managerMap[name]) managerMap[name] = { sales: 0, streams: 0 };
+        managerMap[name].sales += sales;
+        managerMap[name].streams += 1;
+      });
+    });
+    const managers = Object.entries(managerMap).sort((a,b) => b[1].sales - a[1].sales);
+    if (managers.length > 0) {
+      document.getElementById('an-managers-card').style.display = '';
+      document.getElementById('an-managers-body').innerHTML = managers.map(([name, d], idx) => `
+        <tr>
+          <td><strong>${idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : ''}${name}</strong></td>
+          <td><span class="badge badge-blue">${d.sales} продаж</span></td>
+          <td style="color:var(--slate-500)">${d.streams} потоков</td>
+        </tr>`).join('');
+    }
+  }
+}
+
+
+// ===== CONTRACT DOWNLOAD =====
+function downloadContract(event, filename, original) {
+  event.preventDefault();
+  fetch(`/upload/contract/${filename}`, { headers: { 'Authorization': `Bearer ${getToken()}` } })
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = original || filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+}
+
+// ===== EXPORT =====
+function exportExcel() {
+  const token = getToken();
+  const url = `/export/excel?year=${currentYear}&month=${currentMonth}`;
+  const a = document.createElement('a');
+  a.href = url + `&_token=${token}`;
+  fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
+    .then(r => r.blob())
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `aitouch_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    });
+}
+
+
+async function renderAll() {
+  if (!getToken()) return;
+  await Promise.all([renderFinance(), renderClients(), renderNeuro()]);
+}
+
+
+// ===== INIT =====
+updateMonthDisplay();
+if (getToken()) {
+  document.getElementById('login-screen').classList.remove('show');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+*.db
+*.log
+uploads/
+__pycache__/
+*.pyc
+.env
