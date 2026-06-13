@@ -2012,7 +2012,7 @@ async function renderNeuro() {
 
   // Сводные цифры
   const totalStudents = streams.reduce((s,st) => s + st.t1 + st.t2, 0); // без МГ
-  const totalRevenue = streams.reduce((s,st) => s + st.t1*st.p1 + st.t2*st.p2 + st.t3*st.p3, 0);
+  const totalRevenue = streams.reduce((s,st) => s + (st.p1||0) + (st.p2||0) + (st.p3||0), 0);
   const courses = [...new Set(streams.map(s => s.course).filter(Boolean))];
 
   document.getElementById('ns-stat-courses').textContent = courses.length;
@@ -2114,7 +2114,7 @@ function groupBy(arr, key) {
 }
 
 function renderStreamCard(st) {
-  const revenue = st.t1*st.p1 + st.t2*st.p2 + st.t3*st.p3;
+  const revenue = (st.p1 || 0) + (st.p2 || 0) + (st.p3 || 0);
   const totalAll = st.t1 + st.t2 + st.t3;
   const mgrs = parseMgrs(st.managers);
   return `
@@ -2143,15 +2143,15 @@ function renderStreamCard(st) {
           <div style="display:flex;flex-direction:column;gap:5px">
             <div style="display:flex;justify-content:space-between;font-size:13px">
               <span style="color:var(--slate-500)">Стандарт × ${st.t1}</span>
-              <span class="money-neu">${fmt(st.t1 * st.p1)}</span>
+              <span class="money-neu">${fmt(st.p1)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:13px">
               <span style="color:var(--slate-500)">Бизнес × ${st.t2}</span>
-              <span class="money-neu">${fmt(st.t2 * st.p2)}</span>
+              <span class="money-neu">${fmt(st.p2)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:13px">
               <span style="color:var(--slate-500)">Мастер-гр. × ${st.t3}</span>
-              <span class="money-neu">${fmt(st.t3 * st.p3)}</span>
+              <span class="money-neu">${fmt(st.p3)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:13px;border-top:1px solid var(--slate-100);padding-top:6px;margin-top:2px">
               <span style="font-weight:600;color:var(--slate-700)">Итого</span>
