@@ -1049,13 +1049,19 @@ tbody tr:hover { background: var(--slate-50); }
           <input type="date" id="cl-end">
         </div>
       </div>
-      <div class="form-group">
-        <label>Статус</label>
-        <select id="cl-status">
-          <option value="active">В работе</option>
-          <option value="new">Новый (договор)</option>
-          <option value="done">Завершён</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Статус</label>
+          <select id="cl-status">
+            <option value="active">В работе</option>
+            <option value="new">Новый (договор)</option>
+            <option value="done">Завершён</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Сумма договора (₽)</label>
+          <input type="number" id="cl-amount" placeholder="0" min="0">
+        </div>
       </div>
       <div class="form-group">
         <label>Что делаем (задачи / deliverables)</label>
