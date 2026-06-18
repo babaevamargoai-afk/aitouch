@@ -70,6 +70,7 @@ class ClientCreate(BaseModel):
     canvas: str = ""
     notes: str = ""
     contract_file: str = ""
+    manager: str = ""
 
 
 class ClientOut(ClientCreate):

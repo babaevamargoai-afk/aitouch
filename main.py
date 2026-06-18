@@ -18,6 +18,7 @@ def run_migrations():
     migrations = [
         "ALTER TABLE client_tasks ADD COLUMN verified INTEGER DEFAULT 0",
         "ALTER TABLE client_tasks ADD COLUMN is_header INTEGER DEFAULT 0",
+        "ALTER TABLE clients ADD COLUMN manager TEXT DEFAULT ''",
         """CREATE TABLE IF NOT EXISTS client_staff_costs (
             id INTEGER PRIMARY KEY, client_id INTEGER, user_id INTEGER,
             name TEXT DEFAULT '', desc TEXT DEFAULT '',

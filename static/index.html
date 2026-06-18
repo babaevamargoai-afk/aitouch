@@ -1071,9 +1071,15 @@ tbody tr:hover { background: var(--slate-50); }
           <input type="text" id="cl-canvas" placeholder="https://...">
         </div>
       </div>
-      <div class="form-group">
-        <label>Контактное лицо / заметки</label>
-        <input type="text" id="cl-notes" placeholder="Заметки, контакт, особенности...">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ответственный менеджер</label>
+          <input type="text" id="cl-manager" placeholder="Имя менеджера">
+        </div>
+        <div class="form-group">
+          <label>Контактное лицо / заметки</label>
+          <input type="text" id="cl-notes" placeholder="Заметки, контакт, особенности...">
+        </div>
       </div>
       <div class="form-group">
         <label>Договор (PDF, Word, изображение)</label>
@@ -1747,6 +1753,7 @@ function openEditClient(c) {
   document.getElementById('cl-chat').value = c.chat || '';
   document.getElementById('cl-canvas').value = c.canvas || '';
   document.getElementById('cl-notes').value = c.notes || '';
+  document.getElementById('cl-manager').value = c.manager || '';
   // Show existing contract if any
   try {
     const cf = c.contract_file ? JSON.parse(c.contract_file) : null;
@@ -1799,6 +1806,7 @@ async function saveClient() {
     chat: document.getElementById('cl-chat').value,
     canvas: document.getElementById('cl-canvas').value,
     notes: document.getElementById('cl-notes').value,
+    manager: document.getElementById('cl-manager').value,
     contract_file: contractFile !== undefined ? contractFile : (editingClientId ? '__keep__' : ''),
   };
 
@@ -1809,7 +1817,7 @@ async function saveClient() {
     await api('POST', '/clients', body);
   }
   closeModal('client');
-  ['cl-name','cl-tasks','cl-chat','cl-canvas','cl-notes'].forEach(id => document.getElementById(id).value = '');
+  ['cl-name','cl-tasks','cl-chat','cl-canvas','cl-notes','cl-manager'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('cl-amount').value = '';
   document.getElementById('cl-contract-input').value = '';
   document.getElementById('cl-contract-label').innerHTML = '📎 Нажми или перетащи файл сюда';
@@ -1863,6 +1871,7 @@ async function renderClients() {
         <span class="badge ${STATUS_COLORS[c.status]||'badge-slate'}">${STATUS_LABELS[c.status]||c.status}</span>
       </div>
       <div class="cc-meta">
+        ${c.manager ? `<div class="cc-row"><span>👤 Менеджер</span><span style="color:var(--blue-700);font-weight:700">${c.manager}</span></div>` : ''}
         <div class="cc-row"><span>Старт</span><span>${fmtDate(c.start)}</span></div>
         ${c.end ? `<div class="cc-row"><span>Финиш</span><span>${fmtDate(c.end)}</span></div>` : ''}
       </div>
@@ -2196,6 +2205,7 @@ async function openDrawer(clientId) {
   const metaParts = [
     TYPE_LABELS[c.type] || c.type,
     STATUS_LABELS[c.status] || c.status,
+    c.manager ? `👤 ${c.manager}` : '',
     c.start ? `Старт: ${fmtDate(c.start)}` : '',
     c.end ? `Финиш: ${fmtDate(c.end)}` : ''
   ].filter(Boolean);

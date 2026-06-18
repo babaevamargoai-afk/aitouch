@@ -64,6 +64,7 @@ class Client(Base):
     canvas = Column(String, default="")
     notes = Column(Text, default="")
     contract_file = Column(String, default="")
+    manager = Column(String, default="")
 
 
 class ClientTask(Base):
