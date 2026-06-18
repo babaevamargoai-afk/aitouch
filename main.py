@@ -279,6 +279,8 @@ def update_client(item_id: int, body: schemas.ClientCreate, db: Session = Depend
     if not item:
         raise HTTPException(status_code=404)
     for k, v in body.model_dump().items():
+        if k == 'contract_file' and v == '__keep__':
+            continue  # не перезаписывать существующий файл
         setattr(item, k, v)
     db.commit()
     db.refresh(item)

@@ -1793,14 +1793,14 @@ async function saveClient() {
     type: document.getElementById('cl-type').value,
     start: document.getElementById('cl-start').value,
     end: document.getElementById('cl-end').value,
-    amount: 0,
+    amount: parseFloat(document.getElementById('cl-amount').value) || 0,
     status: document.getElementById('cl-status').value,
     tasks: document.getElementById('cl-tasks').value,
     chat: document.getElementById('cl-chat').value,
     canvas: document.getElementById('cl-canvas').value,
     notes: document.getElementById('cl-notes').value,
+    contract_file: contractFile !== undefined ? contractFile : (editingClientId ? '__keep__' : ''),
   };
-  if (contractFile !== undefined) body.contract_file = contractFile;
 
   if (editingClientId) {
     await api('PATCH', `/clients/${editingClientId}`, body);
