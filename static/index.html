@@ -732,7 +732,7 @@ tbody tr:hover { background: var(--slate-50); }
           </tbody>
         </table>
       </div>
-      <div class="table-card">
+      <div class="table-card" id="expense-table-card" style="overflow:visible">
         <div class="tc-header">
           <div>
             <div class="tc-title">📤 Расходы</div>
@@ -741,9 +741,9 @@ tbody tr:hover { background: var(--slate-50); }
           <button class="btn btn-outline btn-sm" onclick="openModal('expense')">+ Добавить</button>
         </div>
         <!-- Фильтры расходов -->
-        <div style="margin-bottom:12px">
+        <div style="margin-bottom:12px;overflow:visible">
           <div style="font-size:11px;color:var(--slate-400);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Категория</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px" id="exp-cat-filters">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;min-width:0" id="exp-cat-filters">
             <button class="mgr-filter-chip active" onclick="setExpCatFilter('__all__',this)">Все</button>
             <button class="mgr-filter-chip" onclick="setExpCatFilter('team',this)">Команда</button>
             <button class="mgr-filter-chip" onclick="setExpCatFilter('ads',this)">Реклама</button>
@@ -753,17 +753,19 @@ tbody tr:hover { background: var(--slate-50); }
             <button class="mgr-filter-chip" onclick="setExpCatFilter('other',this)">Другое</button>
           </div>
           <div style="font-size:11px;color:var(--slate-400);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;margin-top:10px">Теги <span style="font-size:10px;color:var(--slate-300);font-weight:400">(можно несколько)</span></div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px" id="exp-tag-filters"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;min-width:0" id="exp-tag-filters"></div>
         </div>
         <div id="exp-filter-total" style="display:none;background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px;color:var(--slate-600)">
           Итого по фильтру: <strong id="exp-filter-total-val" style="color:var(--red-500)"></strong>
         </div>
+        <div style="overflow-x:auto">
         <table>
           <thead><tr><th>Дата</th><th>На что / описание</th><th>Категория</th><th>Теги</th><th>Сумма</th><th></th></tr></thead>
           <tbody id="expense-table-body">
             <tr class="empty-row"><td colspan="6">Нет расходов за этот период</td></tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
 
