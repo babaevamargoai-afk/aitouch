@@ -32,6 +32,7 @@ class Expense(Base):
     name = Column(String, default="")
     category = Column(String, default="other")
     desc = Column(Text, default="")
+    tags = Column(String, default="")
     year = Column(Integer)
     month = Column(Integer)
 

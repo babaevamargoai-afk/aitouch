@@ -34,6 +34,7 @@ class ExpenseCreate(BaseModel):
     name: str = ""
     category: str = "other"
     desc: str = ""
+    tags: str = ""
     year: int
     month: int
 

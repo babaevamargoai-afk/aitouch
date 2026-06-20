@@ -467,6 +467,14 @@ tbody tr:hover { background: var(--slate-50); }
 }
 .mgr-filter-chip:hover { border-color: var(--purple-600); color: var(--purple-600); }
 .mgr-filter-chip.active { background: var(--purple-600); border-color: var(--purple-600); color: white; }
+.exp-tag-chip {
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid var(--slate-200); background: white; color: var(--slate-500);
+  transition: all .15s;
+}
+.exp-tag-chip:hover { border-color: var(--blue-400); color: var(--blue-600); }
+.exp-tag-chip.selected { background: var(--blue-600); border-color: var(--blue-600); color: white; }
+.exp-tag-pill { display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:var(--blue-50);color:var(--blue-700);border:1px solid var(--blue-200); }
 
 /* CHART CARDS */
 .chart-card { background: white; border: 1px solid var(--slate-200); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
@@ -728,14 +736,32 @@ tbody tr:hover { background: var(--slate-50); }
         <div class="tc-header">
           <div>
             <div class="tc-title">📤 Расходы</div>
-            <div class="tc-subtitle">Все расходы за период</div>
+            <div class="tc-subtitle" id="exp-filter-subtitle">Все расходы за период</div>
           </div>
           <button class="btn btn-outline btn-sm" onclick="openModal('expense')">+ Добавить</button>
         </div>
+        <!-- Фильтры расходов -->
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--slate-400);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Категория</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px" id="exp-cat-filters">
+            <button class="mgr-filter-chip active" onclick="setExpCatFilter('__all__',this)">Все</button>
+            <button class="mgr-filter-chip" onclick="setExpCatFilter('team',this)">Команда</button>
+            <button class="mgr-filter-chip" onclick="setExpCatFilter('ads',this)">Реклама</button>
+            <button class="mgr-filter-chip" onclick="setExpCatFilter('tools',this)">Сервисы</button>
+            <button class="mgr-filter-chip" onclick="setExpCatFilter('tax',this)">Налоги</button>
+            <button class="mgr-filter-chip" onclick="setExpCatFilter('content',this)">Контент</button>
+            <button class="mgr-filter-chip" onclick="setExpCatFilter('other',this)">Другое</button>
+          </div>
+          <div style="font-size:11px;color:var(--slate-400);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;margin-top:10px">Теги <span style="font-size:10px;color:var(--slate-300);font-weight:400">(можно несколько)</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px" id="exp-tag-filters"></div>
+        </div>
+        <div id="exp-filter-total" style="display:none;background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px;color:var(--slate-600)">
+          Итого по фильтру: <strong id="exp-filter-total-val" style="color:var(--red-500)"></strong>
+        </div>
         <table>
-          <thead><tr><th>Дата</th><th>На что / описание</th><th>Категория</th><th>Сумма</th><th></th></tr></thead>
+          <thead><tr><th>Дата</th><th>На что / описание</th><th>Категория</th><th>Теги</th><th>Сумма</th><th></th></tr></thead>
           <tbody id="expense-table-body">
-            <tr class="empty-row"><td colspan="5">Нет расходов за этот период</td></tr>
+            <tr class="empty-row"><td colspan="6">Нет расходов за этот период</td></tr>
           </tbody>
         </table>
       </div>
@@ -1004,6 +1030,20 @@ tbody tr:hover { background: var(--slate-50); }
           <option value="content">Контент / дизайн</option>
           <option value="other">Другое</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label>Теги <span style="font-size:11px;color:var(--slate-400)">(можно выбрать несколько)</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px" id="exp-tag-chips">
+          <button type="button" class="exp-tag-chip" data-tag="neuro" onclick="toggleExpTag(this)">Нейроспринт</button>
+          <button type="button" class="exp-tag-chip" data-tag="client" onclick="toggleExpTag(this)">Клиент</button>
+          <button type="button" class="exp-tag-chip" data-tag="traffic" onclick="toggleExpTag(this)">Трафик</button>
+          <button type="button" class="exp-tag-chip" data-tag="team" onclick="toggleExpTag(this)">Команда</button>
+          <button type="button" class="exp-tag-chip" data-tag="infra" onclick="toggleExpTag(this)">Инфра/сервисы</button>
+          <button type="button" class="exp-tag-chip" data-tag="content" onclick="toggleExpTag(this)">Контент</button>
+          <button type="button" class="exp-tag-chip" data-tag="general" onclick="toggleExpTag(this)">Общее</button>
+        </div>
+        <input type="text" id="exp-tags-custom" placeholder="Свой тег (Enter чтобы добавить)" style="font-size:12px" onkeydown="addCustomExpTag(event)">
+        <input type="hidden" id="exp-tags">
       </div>
       <div class="form-group">
         <label>Комментарий</label>
@@ -1423,6 +1463,11 @@ function changeMonth(dir) {
   currentMonth += dir;
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  // reset expense filters on month change
+  expCatFilter = '__all__';
+  expTagFilters = new Set();
+  document.querySelectorAll('#exp-cat-filters .mgr-filter-chip').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.getElementById('exp-tag-filters').innerHTML = '';
   updateMonthDisplay();
 }
 
@@ -1470,6 +1515,7 @@ function closeModal(type) {
   }
   if (type === 'expense') {
     editingExpenseId = null;
+    setExpTagsUI('');
     document.getElementById('modal-expense-title').textContent = '📤 Добавить расход';
   }
   if (type === 'stream') {
@@ -1556,6 +1602,164 @@ async function deleteIncome(id) {
 }
 
 
+// ===== EXPENSE TAGS =====
+function toggleExpTag(btn) {
+  btn.classList.toggle('selected');
+  syncExpTagsInput();
+}
+
+function syncExpTagsInput() {
+  const selected = [...document.querySelectorAll('#exp-tag-chips .exp-tag-chip.selected')].map(b => b.dataset.tag);
+  // also include any custom tags already in hidden input that aren't predefined
+  const predefined = [...document.querySelectorAll('#exp-tag-chips .exp-tag-chip')].map(b => b.dataset.tag);
+  const current = (document.getElementById('exp-tags').value || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const custom = current.filter(t => !predefined.includes(t));
+  document.getElementById('exp-tags').value = [...selected, ...custom].join(',');
+}
+
+function addCustomExpTag(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const val = e.target.value.trim().toLowerCase().replace(/\s+/g, '_');
+  if (!val) return;
+  const current = (document.getElementById('exp-tags').value || '').split(',').map(s=>s.trim()).filter(Boolean);
+  if (!current.includes(val)) {
+    current.push(val);
+    document.getElementById('exp-tags').value = current.join(',');
+    // add chip visually if not predefined
+    const predefined = [...document.querySelectorAll('#exp-tag-chips .exp-tag-chip')].map(b => b.dataset.tag);
+    if (!predefined.includes(val)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'exp-tag-chip selected';
+      btn.dataset.tag = val;
+      btn.textContent = val;
+      btn.onclick = () => { btn.classList.toggle('selected'); syncExpTagsInput(); if (!btn.classList.contains('selected')) btn.remove(); };
+      document.getElementById('exp-tag-chips').appendChild(btn);
+    }
+  }
+  e.target.value = '';
+}
+
+function setExpTagsUI(tagsStr) {
+  // reset predefined chips
+  document.querySelectorAll('#exp-tag-chips .exp-tag-chip').forEach(b => b.classList.remove('selected'));
+  // remove dynamically added custom chips
+  document.querySelectorAll('#exp-tag-chips .exp-tag-chip[data-custom]').forEach(b => b.remove());
+  if (!tagsStr) { document.getElementById('exp-tags').value = ''; return; }
+  const tags = tagsStr.split(',').map(s=>s.trim()).filter(Boolean);
+  const predefined = [...document.querySelectorAll('#exp-tag-chips .exp-tag-chip')].map(b => b.dataset.tag);
+  tags.forEach(t => {
+    const btn = document.querySelector(`#exp-tag-chips .exp-tag-chip[data-tag="${t}"]`);
+    if (btn) {
+      btn.classList.add('selected');
+    } else {
+      const nb = document.createElement('button');
+      nb.type = 'button'; nb.className = 'exp-tag-chip selected'; nb.dataset.tag = t; nb.dataset.custom = '1';
+      nb.textContent = t;
+      nb.onclick = () => { nb.classList.toggle('selected'); syncExpTagsInput(); if (!nb.classList.contains('selected')) nb.remove(); };
+      document.getElementById('exp-tag-chips').appendChild(nb);
+    }
+  });
+  document.getElementById('exp-tags').value = tagsStr;
+}
+
+// ===== EXPENSE FILTERS =====
+let expCatFilter = '__all__';
+let expTagFilters = new Set();
+
+function setExpCatFilter(cat, btn) {
+  expCatFilter = cat;
+  document.querySelectorAll('#exp-cat-filters .mgr-filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyExpenseFilters();
+}
+
+function toggleExpTagFilter(tag, btn) {
+  if (expTagFilters.has(tag)) { expTagFilters.delete(tag); btn.classList.remove('active'); }
+  else { expTagFilters.add(tag); btn.classList.add('active'); }
+  applyExpenseFilters();
+}
+
+function buildExpTagFilterChips(expenses) {
+  const allTags = new Set();
+  expenses.forEach(e => (e.tags||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(t => allTags.add(t)));
+  const wrap = document.getElementById('exp-tag-filters');
+  // keep active tags that still exist, remove chips for tags that disappeared
+  const existingChips = {};
+  wrap.querySelectorAll('button').forEach(b => existingChips[b.dataset.tag] = b);
+  // remove tags no longer in data
+  Object.keys(existingChips).forEach(t => { if (!allTags.has(t)) { existingChips[t].remove(); expTagFilters.delete(t); } });
+  // add new tags
+  const EXP_TAG_LABELS = { neuro:'Нейроспринт', client:'Клиент', traffic:'Трафик', team:'Команда', infra:'Инфра/сервисы', content:'Контент', general:'Общее' };
+  allTags.forEach(t => {
+    if (!existingChips[t]) {
+      const btn = document.createElement('button');
+      btn.className = 'mgr-filter-chip' + (expTagFilters.has(t) ? ' active' : '');
+      btn.dataset.tag = t;
+      btn.textContent = EXP_TAG_LABELS[t] || t;
+      btn.onclick = () => toggleExpTagFilter(t, btn);
+      wrap.appendChild(btn);
+    }
+  });
+  if (allTags.size === 0) wrap.innerHTML = '<span style="font-size:12px;color:var(--slate-300)">Нет тегов — добавь их к расходам</span>';
+}
+
+let _allExpenses = [];
+
+function applyExpenseFilters() {
+  let filtered = _allExpenses;
+  if (expCatFilter !== '__all__') filtered = filtered.filter(e => e.category === expCatFilter);
+  if (expTagFilters.size > 0) {
+    filtered = filtered.filter(e => {
+      const eTags = (e.tags||'').split(',').map(s=>s.trim()).filter(Boolean);
+      return [...expTagFilters].every(t => eTags.includes(t));
+    });
+  }
+  const isFiltered = expCatFilter !== '__all__' || expTagFilters.size > 0;
+  const totalDiv = document.getElementById('exp-filter-total');
+  if (isFiltered) {
+    const sum = filtered.reduce((s,e) => s + e.amount, 0);
+    document.getElementById('exp-filter-total-val').textContent = sum.toLocaleString('ru-RU', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' ₽';
+    totalDiv.style.display = '';
+    document.getElementById('exp-filter-subtitle').textContent = `Показано: ${filtered.length} из ${_allExpenses.length}`;
+  } else {
+    totalDiv.style.display = 'none';
+    document.getElementById('exp-filter-subtitle').textContent = 'Все расходы за период';
+  }
+  renderExpenseRows(filtered);
+}
+
+const EXP_TAG_LABELS_GLOBAL = { neuro:'Нейроспринт', client:'Клиент', traffic:'Трафик', team:'Команда', infra:'Инфра/сервисы', content:'Контент', general:'Общее' };
+
+function renderExpenseRows(expenses) {
+  const eb = document.getElementById('expense-table-body');
+  if (expenses.length === 0) {
+    eb.innerHTML = '<tr class="empty-row"><td colspan="6">Нет расходов по фильтру</td></tr>';
+    return;
+  }
+  eb.innerHTML = expenses.sort((a,b) => b.date.localeCompare(a.date)).map(e => {
+    const tags = (e.tags||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const tagHtml = tags.length ? tags.map(t => `<span class="exp-tag-pill">${EXP_TAG_LABELS_GLOBAL[t]||t}</span>`).join(' ') : '<span style="color:var(--slate-300);font-size:11px">—</span>';
+    return `<tr>
+      <td style="color:var(--slate-500);font-size:12px">${fmtDate(e.date)}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${e.name || '—'}</div>
+        ${e.desc ? `<div style="font-size:11px;color:var(--slate-400);margin-top:2px">${e.desc.substring(0,60)}${e.desc.length>60?'...':''}</div>` : ''}
+      </td>
+      <td><span class="badge badge-slate">${CAT_LABELS[e.category]||e.category}</span></td>
+      <td style="white-space:nowrap">${tagHtml}</td>
+      <td><span class="money-neg">${fmt(e.amount)}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="edit-btn" onclick='openEditExpense(${JSON.stringify(e)})' title="Редактировать">✎</button>
+          <button class="del-btn" onclick="deleteExpense(${e.id})" title="Удалить">✕</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
 // ===== EXPENSE =====
 function openEditExpense(e) {
   editingExpenseId = e.id;
@@ -1564,6 +1768,7 @@ function openEditExpense(e) {
   document.getElementById('exp-name').value = e.name;
   document.getElementById('exp-category').value = e.category;
   document.getElementById('exp-desc').value = e.desc;
+  setExpTagsUI(e.tags || '');
   document.getElementById('modal-expense-title').textContent = '✏️ Редактировать расход';
   document.getElementById('modal-expense').classList.add('open');
 }
@@ -1577,6 +1782,7 @@ async function saveExpense() {
     name: document.getElementById('exp-name').value,
     category: document.getElementById('exp-category').value,
     desc: document.getElementById('exp-desc').value,
+    tags: document.getElementById('exp-tags').value,
     year: y,
     month: m - 1
   };
@@ -1588,6 +1794,7 @@ async function saveExpense() {
   }
   closeModal('expense');
   ['exp-amount','exp-name','exp-desc'].forEach(id => document.getElementById(id).value = '');
+  setExpTagsUI('');
   document.getElementById('modal-expense-title').textContent = '📤 Добавить расход';
   renderFinance();
 }
@@ -1643,27 +1850,10 @@ async function renderFinance() {
       </tr>`).join('');
   }
 
-  const eb = document.getElementById('expense-table-body');
-  if (expenses.length === 0) {
-    eb.innerHTML = '<tr class="empty-row"><td colspan="5">Нет расходов за этот период</td></tr>';
-  } else {
-    eb.innerHTML = expenses.sort((a,b) => b.date.localeCompare(a.date)).map(e => `
-      <tr>
-        <td style="color:var(--slate-500);font-size:12px">${fmtDate(e.date)}</td>
-        <td>
-          <div style="font-weight:600;font-size:13px">${e.name || '—'}</div>
-          ${e.desc ? `<div style="font-size:11px;color:var(--slate-400);margin-top:2px">${e.desc.substring(0,60)}${e.desc.length>60?'...':''}</div>` : ''}
-        </td>
-        <td><span class="badge badge-slate">${CAT_LABELS[e.category]||e.category}</span></td>
-        <td><span class="money-neg">${fmt(e.amount)}</span></td>
-        <td>
-          <div class="row-actions">
-            <button class="edit-btn" onclick='openEditExpense(${JSON.stringify(e)})' title="Редактировать">✎</button>
-            <button class="del-btn" onclick="deleteExpense(${e.id})" title="Удалить">✕</button>
-          </div>
-        </td>
-      </tr>`).join('');
-  }
+  // Store expenses globally and apply filters
+  _allExpenses = expenses;
+  buildExpTagFilterChips(expenses);
+  applyExpenseFilters();
 }
 
 

@@ -39,6 +39,7 @@ def run_migrations():
         """CREATE TABLE IF NOT EXISTS client_comments (
             id INTEGER PRIMARY KEY, client_id INTEGER, user_id INTEGER,
             text TEXT DEFAULT '', created_at TEXT)""",
+        "ALTER TABLE expenses ADD COLUMN tags TEXT DEFAULT ''",
     ]
     for sql in migrations:
         try:
