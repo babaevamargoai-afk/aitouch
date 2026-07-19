@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import os, uuid, shutil
 
 import models, schemas, auth, export
@@ -88,13 +88,15 @@ def login(body: schemas.UserCreate, db: Session = Depends(get_db)):
 # ===== INCOME =====
 
 @app.get("/income", response_model=List[schemas.IncomeOut])
-def list_income(year: int, month: int, db: Session = Depends(get_db),
+def list_income(year: Optional[int] = None, month: Optional[int] = None,
+                db: Session = Depends(get_db),
                 current_user: models.User = Depends(auth.get_current_user)):
-    return db.query(models.Income).filter(
-        models.Income.user_id == current_user.id,
-        models.Income.year == year,
-        models.Income.month == month
-    ).order_by(models.Income.date.desc()).all()
+    q = db.query(models.Income).filter(models.Income.user_id == current_user.id)
+    if year is not None:
+        q = q.filter(models.Income.year == year)
+    if month is not None:
+        q = q.filter(models.Income.month == month)
+    return q.order_by(models.Income.date.desc()).all()
 
 
 @app.post("/income", response_model=schemas.IncomeOut)
@@ -136,13 +138,15 @@ def delete_income(item_id: int, db: Session = Depends(get_db),
 # ===== EXPENSE =====
 
 @app.get("/expense", response_model=List[schemas.ExpenseOut])
-def list_expense(year: int, month: int, db: Session = Depends(get_db),
+def list_expense(year: Optional[int] = None, month: Optional[int] = None,
+                 db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    return db.query(models.Expense).filter(
-        models.Expense.user_id == current_user.id,
-        models.Expense.year == year,
-        models.Expense.month == month
-    ).order_by(models.Expense.date.desc()).all()
+    q = db.query(models.Expense).filter(models.Expense.user_id == current_user.id)
+    if year is not None:
+        q = q.filter(models.Expense.year == year)
+    if month is not None:
+        q = q.filter(models.Expense.month == month)
+    return q.order_by(models.Expense.date.desc()).all()
 
 
 @app.post("/expense", response_model=schemas.ExpenseOut)
@@ -184,13 +188,15 @@ def delete_expense(item_id: int, db: Session = Depends(get_db),
 # ===== POTENTIAL INCOME =====
 
 @app.get("/potential", response_model=List[schemas.PotentialOut])
-def list_potential(year: int, month: int, db: Session = Depends(get_db),
+def list_potential(year: Optional[int] = None, month: Optional[int] = None,
+                   db: Session = Depends(get_db),
                    current_user: models.User = Depends(auth.get_current_user)):
-    return db.query(models.PotentialIncome).filter(
-        models.PotentialIncome.user_id == current_user.id,
-        models.PotentialIncome.year == year,
-        models.PotentialIncome.month == month
-    ).order_by(models.PotentialIncome.date.desc()).all()
+    q = db.query(models.PotentialIncome).filter(models.PotentialIncome.user_id == current_user.id)
+    if year is not None:
+        q = q.filter(models.PotentialIncome.year == year)
+    if month is not None:
+        q = q.filter(models.PotentialIncome.month == month)
+    return q.order_by(models.PotentialIncome.date.desc()).all()
 
 @app.post("/potential", response_model=schemas.PotentialOut)
 def create_potential(body: schemas.PotentialCreate, db: Session = Depends(get_db),

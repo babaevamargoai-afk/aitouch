@@ -626,12 +626,18 @@ tbody tr:hover { background: var(--slate-50); }
       </div>
     </div>
   </div>
-  <div class="month-selector">
-    <div class="month-label">Текущий период</div>
-    <div class="month-btn-row">
-      <button class="month-arrow" onclick="changeMonth(-1)">‹</button>
-      <div class="month-current" id="monthDisplay">—</div>
-      <button class="month-arrow" onclick="changeMonth(1)">›</button>
+  <div class="month-selector" style="padding:12px 16px">
+    <div class="month-label" style="margin-bottom:8px">Период</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--slate-400);width:22px">от</span>
+        <input type="date" id="finDateFrom" style="flex:1;font-size:11px;padding:4px 6px;border:1px solid var(--slate-200);border-radius:6px;background:white;color:var(--slate-700)" onchange="renderFinance()">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--slate-400);width:22px">до</span>
+        <input type="date" id="finDateTo" style="flex:1;font-size:11px;padding:4px 6px;border:1px solid var(--slate-200);border-radius:6px;background:white;color:var(--slate-700)" onchange="renderFinance()">
+      </div>
+      <button onclick="clearFinDateFilter()" style="font-size:11px;color:var(--slate-400);background:none;border:none;cursor:pointer;text-align:left;padding:0;margin-top:2px">✕ Сбросить</button>
     </div>
   </div>
   <nav class="nav">
@@ -653,7 +659,7 @@ tbody tr:hover { background: var(--slate-50); }
   </nav>
   <div class="sidebar-footer">
     <div class="month-summary-box">
-      <div class="msb-label">Итог месяца</div>
+      <div class="msb-label">Итого</div>
       <div class="msb-value" id="sidebarBalance">0 ₽</div>
       <div class="msb-sub" id="sidebarBalanceSub">доходы - расходы</div>
     </div>
@@ -1457,20 +1463,25 @@ document.getElementById('auth-password').addEventListener('keydown', e => {
 
 
 // ===== MONTH NAV =====
-function updateMonthDisplay() {
-  document.getElementById('monthDisplay').textContent = MONTHS_RU[currentMonth] + ' ' + currentYear;
-  renderAll();
+function clearFinDateFilter() {
+  document.getElementById('finDateFrom').value = '';
+  document.getElementById('finDateTo').value = '';
+  renderFinance();
 }
-function changeMonth(dir) {
-  currentMonth += dir;
-  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-  // reset expense filters on month change
-  expCatFilter = '__all__';
-  expTagFilters = new Set();
-  document.querySelectorAll('#exp-cat-filters .mgr-filter-chip').forEach((b,i) => b.classList.toggle('active', i===0));
-  document.getElementById('exp-tag-filters').innerHTML = '';
-  updateMonthDisplay();
+
+function getFinDateRange() {
+  return {
+    from: document.getElementById('finDateFrom')?.value || '',
+    to: document.getElementById('finDateTo')?.value || '',
+  };
+}
+
+function filterByDateRange(items, from, to) {
+  return items.filter(i => {
+    if (from && i.date < from) return false;
+    if (to && i.date > to) return false;
+    return true;
+  });
 }
 
 
@@ -1576,9 +1587,10 @@ function openEditIncome(i) {
 
 async function saveIncome() {
   const date = document.getElementById('inc-date').value;
-  const [y, m] = date ? date.split('-').map(Number) : [currentYear, currentMonth + 1];
+  const now = new Date();
+  const [y, m] = date ? date.split('-').map(Number) : [now.getFullYear(), now.getMonth() + 1];
   const body = {
-    date,
+    date: date || now.toISOString().slice(0,10),
     amount: parseFloat(document.getElementById('inc-amount').value) || 0,
     source: document.getElementById('inc-source').value,
     desc: document.getElementById('inc-desc').value,
@@ -1777,9 +1789,10 @@ function openEditExpense(e) {
 
 async function saveExpense() {
   const date = document.getElementById('exp-date').value;
-  const [y, m] = date ? date.split('-').map(Number) : [currentYear, currentMonth + 1];
+  const now = new Date();
+  const [y, m] = date ? date.split('-').map(Number) : [now.getFullYear(), now.getMonth() + 1];
   const body = {
-    date,
+    date: date || now.toISOString().slice(0,10),
     amount: parseFloat(document.getElementById('exp-amount').value) || 0,
     name: document.getElementById('exp-name').value,
     category: document.getElementById('exp-category').value,
@@ -1809,21 +1822,28 @@ async function deleteExpense(id) {
 
 async function renderFinance() {
   if (!getToken()) return;
-  const [incomes, expenses] = await Promise.all([
-    api('GET', `/income?year=${currentYear}&month=${currentMonth}`),
-    api('GET', `/expense?year=${currentYear}&month=${currentMonth}`)
+  const [allIncomes, allExpenses] = await Promise.all([
+    api('GET', `/income`),
+    api('GET', `/expense`)
   ]);
-  if (!incomes || !expenses) return;
+  if (!allIncomes || !allExpenses) return;
+
+  const { from, to } = getFinDateRange();
+  const incomes = filterByDateRange(allIncomes, from, to);
+  const expenses = filterByDateRange(allExpenses, from, to);
 
   const totalInc = incomes.reduce((s,i) => s + i.amount, 0);
   const totalExp = expenses.reduce((s,e) => s + e.amount, 0);
   const profit = totalInc - totalExp;
   const margin = totalInc > 0 ? ((profit / totalInc) * 100).toFixed(0) + '%' : '—';
 
+  const periodLabel = from || to
+    ? `${from ? fmtDate(from) : '...'} — ${to ? fmtDate(to) : '...'}`
+    : 'Весь период';
   document.getElementById('stat-income').textContent = fmtShort(totalInc);
-  document.getElementById('stat-income-count').textContent = incomes.length + ' поступлений';
+  document.getElementById('stat-income-count').textContent = incomes.length + ' поступлений · ' + periodLabel;
   document.getElementById('stat-expense').textContent = fmtShort(totalExp);
-  document.getElementById('stat-expense-count').textContent = expenses.length + ' платежей';
+  document.getElementById('stat-expense-count').textContent = expenses.length + ' платежей · ' + periodLabel;
   document.getElementById('stat-profit').textContent = fmtShort(profit);
   document.getElementById('stat-profit-sub').textContent = profit >= 0 ? 'профицит' : 'дефицит';
   document.getElementById('stat-margin').textContent = margin;
@@ -1832,7 +1852,7 @@ async function renderFinance() {
 
   const ib = document.getElementById('income-table-body');
   if (incomes.length === 0) {
-    ib.innerHTML = '<tr class="empty-row"><td colspan="4">Нет поступлений за этот период</td></tr>';
+    ib.innerHTML = '<tr class="empty-row"><td colspan="4">Нет поступлений</td></tr>';
   } else {
     ib.innerHTML = incomes.sort((a,b) => b.date.localeCompare(a.date)).map(i => `
       <tr>
@@ -1875,9 +1895,10 @@ function openEditPotential(i) {
 
 async function savePotential() {
   const date = document.getElementById('pot-date').value;
-  const [y, m] = date ? date.split('-').map(Number) : [currentYear, currentMonth + 1];
+  const now = new Date();
+  const [y, m] = date ? date.split('-').map(Number) : [now.getFullYear(), now.getMonth() + 1];
   const body = {
-    date,
+    date: date || now.toISOString().slice(0,10),
     amount: parseFloat(document.getElementById('pot-amount').value) || 0,
     source: document.getElementById('pot-source').value,
     desc: document.getElementById('pot-desc').value,
@@ -1904,7 +1925,9 @@ async function deletePotential(id) {
 
 async function renderPotential() {
   if (!getToken()) return;
-  const items = await api('GET', `/potential?year=${currentYear}&month=${currentMonth}`);
+  const { from, to } = getFinDateRange();
+  const allItems = await api('GET', `/potential`);
+  const items = filterByDateRange(allItems || [], from, to);
   if (!items) return;
 
   const total = items.reduce((s,i) => s + i.amount, 0);
@@ -2816,16 +2839,18 @@ function downloadContract(event, filename, original) {
 // ===== EXPORT =====
 function exportExcel() {
   const token = getToken();
-  const url = `/export/excel?year=${currentYear}&month=${currentMonth}`;
-  const a = document.createElement('a');
-  a.href = url + `&_token=${token}`;
+  const { from, to } = getFinDateRange();
+  const now = new Date();
+  const year = from ? parseInt(from.split('-')[0]) : now.getFullYear();
+  const month = from ? parseInt(from.split('-')[1]) - 1 : now.getMonth();
+  const url = `/export/excel?year=${year}&month=${month}`;
   fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
     .then(r => r.blob())
     .then(blob => {
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `aitouch_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.xlsx`;
+      a.download = `aitouch_export.xlsx`;
       a.click();
       URL.revokeObjectURL(blobUrl);
     });
